@@ -1,0 +1,397 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Skin Lab</title>
+<meta name="description" content="An interactive skin-care lab: pick your skin type, mix ingredients, and explore a 3D skin model.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4a9de3">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Skin Lab">
+<meta property="og:description" content="Pick your skin type, mix ingredients in a virtual beaker and explore a live 3D skin model.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#fff;--ink:#0f2a43;--mut:#5b7189;--blue:#4a9de3;--soft:#eef6fc;--line:#dce9f4;--card:#fff;--pn:#d9eaf7;--serif:"Playfair Display",Georgia,serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1622;--ink:#e6f1fb;--mut:#93a9bf;--soft:#12263a;--line:#23405c;--card:#0f1f2f;--pn:#0d2236}}
+:root[data-theme="dark"]{--bg:#0b1622;--ink:#e6f1fb;--mut:#93a9bf;--soft:#12263a;--line:#23405c;--card:#0f1f2f;--pn:#0d2236}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Inter,system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:56px 24px 560px}
+.top{text-align:left;padding:10px 0 20px}.tag{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(48px,9vw,88px);line-height:1;margin:14px 0 10px}h1 span{color:var(--blue)}.top p{color:var(--mut);font-size:18px;margin:0}
+.sec{margin-top:120px}.sh{text-align:left;margin-bottom:48px}.sh span{font-size:12px;letter-spacing:.3em;color:var(--blue);font-weight:700}
+.sh h2{font-family:var(--serif);font-weight:500;font-size:clamp(28px,5vw,42px);margin:8px 0}.sh p{color:var(--mut);margin:0;font-size:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:40px}
+textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:14px;font:inherit;background:var(--soft);color:var(--ink);resize:vertical;min-height:80px}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:12px 24px;background:var(--blue);color:#fff;font-weight:600;transition:.2s}
+button:hover{transform:translateY(-1px);box-shadow:0 8px 20px -8px var(--blue)}button:disabled{opacity:.45;cursor:default;transform:none;box-shadow:none}
+button.g{background:var(--soft);color:var(--ink);border:1px solid var(--line)}.chip{font-size:13px;padding:8px 14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px;justify-content:flex-start}
+.feels{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;margin-bottom:24px}
+.feel{background:var(--card);color:var(--ink);border:1.5px solid var(--line);padding:20px 12px;font-size:15px;border-radius:14px}
+.feel.on{border-color:var(--blue);background:var(--soft);box-shadow:0 0 0 3px rgba(74,157,227,.2)}
+.shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:28px}
+.vial{touch-action:none;user-select:none;text-align:center;padding:28px 18px;border:1px solid var(--line);border-radius:22px;cursor:grab;background:var(--card);animation:in .7s both;transition:.2s}
+.vial:hover{transform:translateY(-4px)}.vial.sel{border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,157,227,.2)}.vial.used{opacity:.45}
+.bt{width:46px;height:84px;margin:0 auto 12px;border-radius:8px 8px 16px 16px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line),inset 5px 0 8px rgba(255,255,255,.8);position:relative}
+.bt:before{content:"";position:absolute;left:12px;top:-14px;width:18px;height:14px;background:#cfe6fa;border-radius:4px 4px 0 0;border:1px solid var(--line)}
+.vial small{display:block;color:var(--mut);font-size:12.5px;line-height:1.45;margin-top:6px}
+@keyframes in{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.ghost{position:fixed;pointer-events:none;z-index:99;transform:translate(-50%,-50%);padding:10px 16px;border-radius:99px;color:#fff;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.det{font-size:15px;line-height:1.6;color:var(--mut);background:var(--soft);border-radius:18px;padding:30px;margin-top:36px;line-height:1.75}.det b{color:var(--ink)}
+.bench{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}@media(max-width:860px){.bench{grid-template-columns:1fr}}
+.side h3{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--blue);margin:0 0 12px}.side h3+*{margin-bottom:44px}
+.ic{display:inline-block;font-size:13px;padding:5px 12px;border-radius:99px;border:1px solid var(--line);margin:3px 4px 3px 0;color:var(--mut)}.ic.hit{background:var(--blue);color:#fff;border-color:var(--blue)}
+.feat{display:flex;gap:20px;margin-bottom:32px;animation:in .6s both}.fn{font-family:var(--serif);font-size:34px;color:var(--blue);line-height:1}
+.feat p{margin:8px 0 4px;font-size:14px;color:var(--mut);line-height:1.5}.feat small{font-size:12px;color:var(--blue)}.feat>div:last-child{flex:1}
+.bar{height:8px;border-radius:9px;background:var(--soft);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#9bd0ff,var(--blue));transition:width 1s}
+.beak{transition:filter .3s}.beak.over{filter:drop-shadow(0 0 18px rgba(59,156,240,.7))}
+.mol{animation:fl var(--d) ease-in-out infinite alternate}@keyframes fl{from{transform:translate(0,0) rotate(0)}to{transform:translate(var(--dx),var(--dy)) rotate(40deg)}}
+.sl{animation:slosh 3s linear infinite}@keyframes slosh{to{transform:translateX(120px)}}
+.bub{animation:rise var(--d) ease-in infinite}@keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:.8}100%{transform:translateY(-150px);opacity:0}}
+.drop{animation:fall .8s cubic-bezier(.5,0,1,.6) forwards}@keyframes fall{from{transform:translateY(-10px)}to{transform:translateY(170px);opacity:.2}}
+.rip{transform-box:fill-box;transform-origin:center;animation:rp 1s ease-out forwards}@keyframes rp{from{transform:scale(.2);opacity:.9}to{transform:scale(3);opacity:0}}
+.three{height:clamp(340px,56vw,520px);border-radius:20px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 30%,#16293c,#0b1520);border:1px solid var(--line);cursor:grab}
+.three canvas{display:block;width:100%;height:100%}.hint{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:12px;color:var(--mut);pointer-events:none}
+.mets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px;margin-top:24px}.mets div div{font-size:13px;color:var(--mut);display:flex;justify-content:space-between}
+.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px}.prod{animation:in .7s both;display:flex;flex-direction:column;gap:10px}
+.note{font-size:13px;color:var(--mut);line-height:1.6}
+.spin{animation:sp 1s linear infinite;display:inline-block}@keyframes sp{to{transform:rotate(360deg)}}
+.scan{height:3px;background:linear-gradient(90deg,transparent,var(--blue),transparent);animation:sc 1.2s ease-in-out infinite}@keyframes sc{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.pip{position:fixed;right:20px;bottom:20px;width:min(520px,calc(100vw - 24px));z-index:50;background:#0e1b29;color:#dbe8f5;border:1px solid #23405c;border-radius:18px;box-shadow:0 20px 50px -10px rgba(0,0,0,.45);overflow:hidden;animation:in .5s both}
+.pip.big{width:min(580px,calc(100vw - 24px))}.ph{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:grab;touch-action:none;user-select:none}
+.ph button{background:transparent;border:1px solid #2c4b6a;color:#dbe8f5;padding:4px 10px;font-size:12px;border-radius:6px;margin-left:6px;box-shadow:none}
+.pip .three{height:300px;border:0;border-radius:0}.pip.big .three{height:340px}.pip .hint{display:none}
+.pm{padding:12px 14px 4px;display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:11px;color:#93a9bf}.pip .bar{background:#1b3248;height:6px}.pip .bar i{background:linear-gradient(90deg,#3f6f9e,#78b0e6)}
+.pn{padding:6px 14px 12px;font-size:11px;color:#7d93a9}
+@media(max-width:640px){.pip{right:12px;bottom:12px}.pip .three{height:200px}.pn{display:none}.wrap{padding:28px 16px 480px}}
+.feel{text-align:left}.feel small{display:block;color:var(--mut);font-size:12px;margin-top:4px}
+.lbl{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--blue);margin:44px 0 18px}.sws{display:flex;gap:10px;flex-wrap:wrap}
+button.sw{width:38px;height:38px;padding:0;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 1px var(--line)}button.sw.on{box-shadow:0 0 0 2px var(--blue)}button.sw.s{width:28px;height:28px;border-color:#0e1b29;box-shadow:0 0 0 1px #2c4b6a}button.sw.s.on{box-shadow:0 0 0 2px #78b0e6}
+button.cn{padding:9px 16px;border-radius:99px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);font-weight:500}button.cn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pt{display:flex;gap:6px;padding:4px 14px 6px;flex-wrap:wrap}
+.b3{width:100%;height:150px;margin-bottom:14px}.b3 canvas{display:block;margin:0 auto}.pl{width:100%;font-size:11px;color:#93a9bf;letter-spacing:.14em;text-transform:uppercase}.dh{font-size:11px;letter-spacing:.08em;color:#7d93a9;text-transform:none}.pip .pm{padding-top:16px}.pt{gap:10px;padding:14px 14px 8px}
+.ghost.gb{padding:0;border-radius:0;box-shadow:none;background:none;filter:drop-shadow(0 12px 14px rgba(0,0,0,.3));transform:translate(-50%,-60%) rotate(-12deg);text-align:center;color:var(--ink);font-size:12px;font-weight:600}
+.lg{display:flex;flex-wrap:wrap;gap:6px 14px;padding:2px 14px 6px;font-size:11px;color:#93a9bf}.lg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.rec{border-color:var(--blue);box-shadow:0 0 0 3px rgba(74,157,227,.15)}.rh{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin:10px 0 18px}.rh h3{font-family:var(--serif);font-weight:500;font-size:clamp(24px,4vw,34px);margin:6px 0 4px}.pct{font-family:var(--serif);font-size:56px;line-height:1;color:var(--blue);white-space:nowrap}.pct small{font-size:14px;font-family:inherit;color:var(--mut);margin-left:4px}.cmp{margin-top:22px;display:grid;gap:16px}.cmp .lab{font-size:12px;color:var(--mut);display:flex;justify-content:space-between}
+.vial{position:relative}.rt{position:absolute;top:12px;right:12px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:700}.sc{padding:10px 14px 0;font-size:12px;color:#93a9bf}.sc b{color:#9fe0c4;font-size:18px}.sc .up{color:#9fe0c4;font-weight:600}
+.card.p2{padding:28px}.shelf2{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px;max-height:340px;overflow:auto;padding:4px}.shelf2 .vial{padding:12px 6px;border-radius:16px;font-size:13px}.shelf2 .rt{position:static;display:block;height:13px;margin-bottom:4px;font-size:9px}.shelf2 .vial b{display:block;line-height:1.25}.det{margin-top:20px;padding:22px}.pip.inl{position:static;width:auto;right:auto;bottom:auto;box-shadow:none;animation:none}.pip.inl .three{height:clamp(300px,40vw,380px)}
+.pip .three{height:var(--ph,300px)}.ph .dh{margin-left:auto;margin-right:10px;white-space:nowrap}
+.ph{flex-wrap:wrap;gap:6px 10px;letter-spacing:.08em}.ph>span:first-child{flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:16px}.ph>span:last-child{flex:0 0 auto;white-space:nowrap}
+.shelf2.own{box-shadow:0 0 0 2px var(--blue);border-radius:16px}
+
+/* type scale: desktop / mobile */
+:root{--sans:Inter,"Helvetica Neue",system-ui,sans-serif}
+body{font-family:var(--sans);font-size:16px;line-height:24px;font-weight:400}
+h1{font-family:var(--serif);font-size:110px;line-height:100px;font-weight:600;margin:0 0 8px}
+.top{padding:10px 0 0}
+.sh h2{font-family:var(--sans);font-size:32px;line-height:40px;font-weight:600}
+.sh p{font-size:20px;line-height:28px;font-weight:500}
+button{font-size:18px;line-height:22px;font-weight:600}
+.det,.feel{font-size:16px;line-height:24px}.feel{font-weight:400}
+button.cn{font-size:16px;line-height:24px;font-weight:500}
+.chip{font-size:16px;line-height:22px;font-weight:600}
+.note,.feat p,.ic,.vial b,.shelf2 .vial{font-size:14px;line-height:20px}
+.vial small,.feel small,.feat small,.hint,.pn,.lg,.pm,.sc,.dh{font-size:12px;line-height:16px;font-weight:400}
+.tag,.lbl,.sh span,.side h3,.rt,.ph,.pl{font-size:12px;line-height:14px;font-weight:500}
+.fn{font-family:var(--sans);font-size:32px;line-height:40px;font-weight:600}
+.pct{font-family:var(--sans);font-size:48px;line-height:56px;font-weight:700}.pct small{font-size:14px;line-height:20px;font-weight:400}
+.rh h3{font-family:var(--sans);font-size:24px;line-height:32px;font-weight:600}
+@media(max-width:640px){body{line-height:26px}h1{font-size:32px;line-height:40px}.sh h2{font-size:24px;line-height:32px}.sh p{font-size:18px;line-height:24px}button{font-size:16px;line-height:20px}.det,.feel{line-height:26px}.fn{font-size:24px;line-height:32px}.pct{font-size:32px;line-height:40px}.rh h3{font-size:20px;line-height:28px}.ph button{font-size:12px}}
+.vial.rc{background:rgba(74,157,227,.14);border-color:#9bd0ff}.card.shc{padding:0;align-self:stretch;position:relative;min-height:420px}.shin{position:absolute;inset:28px;display:flex;flex-direction:column;min-height:0}.shin .shelf2{flex:1;min-height:0;max-height:none}.shin .det{flex:none;max-height:42%;overflow:auto;margin-top:16px}
+@media(max-width:860px){.card.shc{padding:28px;min-height:0}.shin{position:static}.shin .shelf2{max-height:340px}.shin .det{max-height:none}}
+.mrow{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px;line-height:20px;color:var(--mut)}.mrow.no{opacity:.6}.mrow .ic{flex:none;margin:0}.mrow span:last-child{flex:1;min-width:0}
+.sec{margin-top:80px}.sh{margin-bottom:80px}.lbl{margin-top:80px}.sh+.lbl{margin-top:0}.side h3+*{margin-bottom:80px}.side h3:last-child,.side>*:last-child{margin-bottom:0}
+@media(max-width:640px){.sec{margin-top:56px}.sh{margin-bottom:48px}.lbl{margin-top:56px}.side h3+*{margin-bottom:56px}}
+
+.pip{display:flex;flex-direction:column}.pip>*{flex:none}.pip.rs .three{height:auto;flex:1 1 0;min-height:120px}
+.rz{position:absolute;z-index:5;touch-action:none}
+.rz-n,.rz-s{left:12px;right:12px;height:10px;cursor:ns-resize}.rz-n{top:0}.rz-s{bottom:0}
+.rz-e,.rz-w{top:12px;bottom:12px;width:10px;cursor:ew-resize}.rz-e{right:0}.rz-w{left:0}
+.rz-ne,.rz-nw,.rz-se,.rz-sw{width:18px;height:18px}.rz-ne{top:0;right:0;cursor:nesw-resize}.rz-nw{top:0;left:0;cursor:nwse-resize}.rz-sw{bottom:0;left:0;cursor:nesw-resize}.rz-se{bottom:0;right:0;cursor:nwse-resize;background:linear-gradient(135deg,transparent 55%,#5b7f9f 55%,#5b7f9f 62%,transparent 62%,transparent 72%,#5b7f9f 72%,#5b7f9f 79%,transparent 79%)}
+
+/* keep the original spacing; just leave a little room above a section when scrolling to it */
+.sec{scroll-margin-top:calc(24px + env(safe-area-inset-top,0px))}
+/* adaptive layout: every section reflows to the screen width */
+.pg{grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr))}
+.feels{grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr))}
+.mets{grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr))}
+.bench>*{min-width:0}
+@media(max-width:860px){.beak{margin:0 auto!important}.bench{gap:32px}.card.shc{min-height:0}}
+@media(max-width:640px){.card{padding:24px}.card.p2{padding:20px}.card.shc{padding:20px}.rh{flex-direction:column;gap:6px}.row{gap:10px}.row button{flex:1 1 100%}.feat{gap:14px}.det{padding:18px}.mrow{flex-wrap:wrap}.cmp .lab{flex-direction:column;gap:2px}}
+@media(max-width:380px){.wrap{padding-left:12px;padding-right:12px}.pct{font-size:28px;line-height:36px}}
+</style></head><body><div id="root"></div><noscript>Skin Lab needs JavaScript to run. Please enable it and reload.</noscript>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const {useState,useRef,useEffect}=React,h=React.createElement;
+// Educational ingredient data. e = effect points on skin-model meters.
+const ING={
+ha:{n:"Hyaluronic acid",c:"#6cc0ff",s:"humectant that binds water",sci:"A humectant: it attracts and holds many times its weight in water, helping the outer skin layers look plumper and feel softer. It supports surface hydration; it is not a moisturizer by itself, so it pairs well with an emollient.",e:{hyd:3}},
+gly:{n:"Glycerin",c:"#9fe0e8",s:"humectant that draws in water",sci:"One of the most studied humectants. It pulls water into the stratum corneum and helps keep it supple, especially when paired with lipids.",e:{hyd:2,bar:1}},
+cer:{n:"Ceramides",c:"#a9b8ff",s:"skin-identical barrier lipids",sci:"Ceramides are lipids that make up a large share of the “mortar” between skin cells. Replenishing them helps the barrier hold water in and keep irritants out.",e:{bar:3,hyd:1}},
+nia:{n:"Niacinamide",c:"#FBF2F5",s:"Calms, strengthens, and evens skin tone",t:"Calms, strengthens, and evens skin tone.",sci:"A form of vitamin B3. Studies show it supports barrier function and can visibly improve the look of pores, uneven tone and oiliness over weeks of use.",e:{bar:1,clr:1,rad:1,calm:1}},
+sal:{n:"Salicylic acid",c:"#ff9ec4",s:"oil-soluble BHA for pores",sci:"A beta-hydroxy acid. Because it dissolves in oil, it can work inside pores to loosen the mix of sebum and dead cells behind blackheads and breakouts.",e:{clr:3,ren:1},w:"Can dry or irritate; start slowly and use daily sunscreen."},
+lha:{n:"LHA",c:"#ffb4a2",s:"gentle lipo-hydroxy acid",sci:"Capryloyl salicylic acid is a salicylic-acid derivative used by La Roche-Posay for gentler, more targeted exfoliation of the skin surface and pore lining.",e:{clr:2,ren:2},w:"Exfoliating acid: use daily sunscreen."},
+ret:{n:"Retinol",c:"#ffb066",s:"vitamin A for renewal",sci:"A vitamin A derivative that is converted in skin to retinoic acid. It encourages cell turnover and is among the best-studied ingredients for the look of fine lines and uneven texture.",e:{ren:3,rad:1},w:"Can irritate and increases sun sensitivity. Not for use in pregnancy; ask a clinician if unsure."},
+vc:{n:"Vitamin C",c:"#ffc94d",s:"antioxidant for radiance",sci:"Ascorbic acid is an antioxidant that helps neutralize free radicals from UV and pollution, supports collagen production, and can visibly brighten dull-looking skin.",e:{rad:3}},
+pan:{n:"Panthenol (B5)",c:"#8fe3c0",s:"soothing pro-vitamin B5",sci:"Converted to vitamin B5 in skin. It attracts water, supports barrier recovery and helps skin feel more comfortable after dryness or irritation.",e:{calm:3,hyd:1,bar:1}},
+mad:{n:"Madecassoside",c:"#9ed9a0",s:"Centella-derived soother",sci:"A compound from Centella asiatica traditionally used in soothing skincare. It is formulated to help skin feel calmer and more comfortable.",e:{calm:2}},
+mel:{n:"Melasyl",c:"#F7F7F7",s:"Brightens and helps reduce dark spots",t:"Brightens and helps reduce dark spots.",sci:"Melasyl is a patented La Roche-Posay molecule. The brand reports that it targets excess melanin production to help visibly reduce dark spots and even out skin tone. It is designed for all skin tones; results build with consistent use and daily sunscreen.",e:{rad:3},w:"Dark spots can darken with sun exposure. Use daily broad-spectrum SPF."},
+tsw:{n:"Thermal Spring Water",c:"#ECFEFF",s:"Soothes, protects, and supports a healthy skin barrier",t:"Soothes, protects, and supports a healthy skin barrier.",sci:"La Roche-Posay’s spring water in France is reported by the brand to be rich in selenium, with soothing and antioxidant properties. It serves as a gentle, mineral-containing base.",e:{calm:2,rad:1}}};
+const CK=[[/dry|dehydrat|tight|thirst|moistur|parch/,"dryness",["ha","gly","cer","pan"]],[/sensitiv|red|irritat|sting|reactive|calm|rosacea-prone/,"sensitivity",["pan","mad","tsw","cer","nia"]],[/oil|shin|pore|acne|pimple|breakout|blackhead|clog|blemish/,"oiliness & pores",["sal","lha","nia","gly"]],[/aging|ageing|wrinkle|fine line|firm|mature|anti-?age/,"early signs of aging",["ret","vc","ha","nia"]],[/dull|bright|dark spot|uneven|tone|glow|tired|pigment/,"dullness & uneven tone",["vc","nia","ret","ha"]],[/barrier|flak|peel|rough|damag|repair/,"a compromised-feeling barrier",["cer","gly","pan","mad"]]];
+// PROTOTYPE sample product data: names/ingredients are illustrative; verify on the official site.
+const PROD=[{n:"Hyalu B5 Serum",f:"Hydration & plumping",i:["ha","pan","mad"]},{n:"Toleriane Double Repair Moisturizer",f:"Barrier support, all-day hydration",i:["cer","nia","gly","tsw"]},{n:"Effaclar Ultra Concentrated Serum",f:"Pores & breakout-prone skin",i:["sal","lha","nia"]},{n:"Cicaplast Baume B5",f:"Soothing & skin recovery",i:["pan","mad","gly"]},{n:"Pure Vitamin C10 Serum",f:"Radiance & antioxidant care",i:["vc","sal"]},{n:"Mela B3 Serum",f:"Dark spots & even tone",i:["mel","nia"]},{n:"Retinol B3 Serum",f:"Renewal & fine lines",i:["ret","nia"]}];
+const MET=[["hyd","Hydration"],["bar","Barrier"],["clr","Clear pores"],["rad","Radiance"],["calm","Comfort"],["ren","Renewal"]];
+const EX=["My skin feels tight and dry in winter","Oily T-zone with clogged pores","Dull skin and early fine lines","Sensitive, easily red skin"];
+function demo(t){t=t.toLowerCase();const sc={},lab={};CK.forEach(([r,l,p])=>{if(r.test(t))p.forEach((id,k)=>{sc[id]=(sc[id]||0)+4-k;(lab[id]=lab[id]||[]).push(l)})});
+let ids=Object.keys(sc).sort((a,b)=>sc[b]-sc[a]).slice(0,5);const none=!ids.length;if(none)ids=["ha","nia","cer","tsw"];
+return{summary:none?"I didn’t spot a specific concern, so here is a gentle, well-rounded starter set.":"Your description points to: "+[...new Set(ids.flatMap(i=>lab[i]))].join(", ")+".",picks:ids.map(id=>({id,why:none?ING[id].s:"For "+[...new Set(lab[id])].join(" & ")+": "+ING[id].s+"."}))}}
+async function ai(t){const sm=window.claude&&await window.claude.use("sample");if(!sm)throw 0;
+const list=Object.entries(ING).map(([k,v])=>k+": "+v.n+" ("+v.s+")").join("\n");
+const r=await sm.json("You are a careful skincare educator for a museum-style exhibit. Visitor says: \""+t.slice(0,400)+"\"\nChoose 3-5 ingredient ids ONLY from this list:\n"+list+"\nReturn ONLY JSON: {\"summary\":\"one friendly sentence, no diagnosis\",\"picks\":[{\"id\":\"...\",\"why\":\"one sentence on how it works, factual, no invented reactions\"}]}. If the concern sounds medical (infection, severe pain, bleeding, changing moles), make the summary suggest seeing a dermatologist.",{cache:false});
+const p=(r.picks||[]).filter(x=>ING[x.id]).slice(0,5);if(!p.length)throw 0;return{summary:String(r.summary||""),picks:p}}
+const mix=ids=>{if(!ids.length)return"#bfe3ff";let r=[0,0,0];ids.forEach(i=>{const c=ING[i].c;for(let k=0;k<3;k++)r[k]+=parseInt(c.substr(1+k*2,2),16)});return"rgb("+r.map(v=>Math.round((v/ids.length+255*1.4)/2.4)).join(",")+")"};
+const Mol=({c})=>h("g",null,h("line",{x1:0,y1:0,x2:11,y2:-7,stroke:c,strokeWidth:2}),h("line",{x1:11,y1:-7,x2:20,y2:3,stroke:c,strokeWidth:2}),h("circle",{r:6,fill:c}),h("circle",{cx:11,cy:-7,r:4.5,fill:c,opacity:.8}),h("circle",{cx:20,cy:3,r:4,fill:"#fff",stroke:c,strokeWidth:2}));
+function Beaker({items,drops,over}){const ly=272-Math.min(items.length,6)*30,col=mix(items);
+return h("svg",{viewBox:"0 0 260 320",className:"beak"+(over?" over":""),style:{width:"100%",maxWidth:420,display:"block",margin:"0"}},
+h("defs",null,h("clipPath",{id:"cp"},h("path",{d:"M72 40V268Q72 292 96 292H164Q188 292 188 268V40Z"})),h("linearGradient",{id:"gl",x1:0,x2:1},h("stop",{offset:0,stopColor:"#fff",stopOpacity:.9}),h("stop",{offset:.3,stopColor:"#cfe8ff",stopOpacity:.25}),h("stop",{offset:1,stopColor:"#fff",stopOpacity:.7}))),
+h("ellipse",{cx:130,cy:306,rx:80,ry:8,fill:"rgba(59,156,240,.18)"}),
+h("g",{clipPath:"url(#cp)"},h("g",{style:{transform:"translate(72px,"+ly+"px)",transition:"transform 1.2s cubic-bezier(.3,.8,.3,1)"}},
+h("g",{className:"sl"},h("path",{d:"M-120 0q30-8 60 0t60 0t60 0t60 0t60 0t60 0V300H-120Z",fill:col,opacity:.55})),
+h("g",{className:"sl",style:{animationDuration:"4.5s"}},h("path",{d:"M-120 4q30 8 60 0t60 0t60 0t60 0t60 0t60 0V300H-120Z",fill:col,opacity:.75}))),
+items.length>0&&[0,1,2,3,4,5,6].map(k=>h("circle",{key:k,className:"bub",cx:88+k*14,cy:286,r:2+k%3,fill:"#fff",opacity:.7,style:{"--d":2+k*.45+"s",animationDelay:k*.3+"s"}})),
+items.map((id,i)=>[0,1,2].map(k=>{const x=88+((i*37+k*29)%70),y=Math.max(ly+22,120)+((i*53+k*41)%Math.max(30,290-Math.max(ly+22,120)-20));
+return h("g",{key:id+k,transform:"translate("+x+","+y+")"},h("g",{className:"mol",style:{"--d":2.2+k*.7+"s","--dx":(k%2?9:-9)+"px","--dy":(k?-10:8)+"px"}},h("g",{transform:"scale(.8)"},h(Mol,{c:ING[id].c}))))})) ),
+h("path",{d:"M72 40V268Q72 292 96 292H164Q188 292 188 268V40",fill:"url(#gl)",stroke:"#8ec5f5",strokeWidth:3,strokeLinecap:"round"}),
+h("path",{d:"M62 36Q72 40 72 40M198 36Q188 40 188 40M62 36H198",fill:"none",stroke:"#8ec5f5",strokeWidth:4,strokeLinecap:"round"}),
+[80,100,120,140,160,180,200].map((y,k)=>h("line",{key:k,x1:72,x2:k%2?82:90,y1:y+28,y2:y+28,stroke:"#8ec5f5",strokeWidth:1.5})),
+h("path",{d:"M82 54V255",stroke:"#fff",strokeWidth:5,strokeLinecap:"round",opacity:.85}),
+drops.map(d=>h("g",{key:d.k},h("circle",{className:"drop",cx:130,cy:50,r:6,fill:ING[d.id].c}),h("ellipse",{className:"rip",cx:130,cy:ly+4,rx:14,ry:3,fill:"none",stroke:ING[d.id].c,strokeWidth:2,style:{animationDelay:".55s",opacity:0}}))))}
+// Skin cross-section in the style of an anatomical isometric block: stratum corneum, epidermis, wavy junction with basal cells,
+// dermis (collagen, elastin, fibroblasts, nerves) and a fat layer. Faces are drawn on canvas textures and react to the meters.
+const hx=c=>[parseInt(c.substr(1,2),16),parseInt(c.substr(3,2),16),parseInt(c.substr(5,2),16)];
+const mixc=(a,b,t)=>{const A=hx(a),B=hx(b);return"#"+A.map((v,i)=>("0"+Math.round(v+(B[i]-v)*t).toString(16)).slice(-2)).join("")};
+const rng=s=>()=>(s=(s*16807)%2147483647)/2147483647;
+function star(x,cx,cy,r,fill,stroke){x.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,rr=i%2?r*.38:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}x.closePath();x.fillStyle=fill;x.fill();if(stroke){x.strokeStyle=stroke;x.lineWidth=1;x.stroke()}}
+function drawTop(cv,seed,P,tone){const W=cv.width,H=cv.height,x=cv.getContext("2d"),R=rng(seed),dd=Math.max(0,(.5-P.hyd)/.5),oo=Math.max(0,(.3-P.clr)/.3),rr=Math.max(0,(.3-P.calm)/.3);
+x.fillStyle=mixc(mixc(tone,"#ffffff",.12),"#e6ddd5",dd*.4);x.fillRect(0,0,W,H);
+x.fillStyle="rgba(80,40,30,.12)";for(let n=0;n<70;n++){x.beginPath();x.arc(R()*W,R()*H,1.5+R()*1.5,0,7);x.fill()}
+for(let n=Math.round(rr*14);n>0;n--){const u=R()*W,y=R()*H,g=x.createRadialGradient(u,y,0,u,y,30+R()*30);g.addColorStop(0,"rgba(200,35,35,"+(.45*rr)+")");g.addColorStop(1,"rgba(200,35,35,0)");x.fillStyle=g;x.fillRect(0,0,W,H)}
+if(dd>0){x.lineCap="round";for(let n=Math.round(dd*26)+6;n>0;n--){let u=R()*W,y=R()*H;x.beginPath();x.moveTo(u,y);for(let q=0;q<5;q++){u+=(R()-.5)*50;y+=(R()-.5)*50;x.lineTo(u,y)}x.strokeStyle="rgba(100,55,45,"+(.35+.3*dd)+")";x.lineWidth=2;x.stroke()}
+for(let n=Math.round(dd*60)+10;n>0;n--){const u=R()*W,y=R()*H,w=8+R()*14;x.beginPath();x.moveTo(u,y);x.lineTo(u+w,y-4-R()*6);x.lineTo(u+w*1.2,y+3);x.lineTo(u+w*.3,y+8);x.closePath();x.fillStyle="rgba(255,255,255,.85)";x.fill();x.strokeStyle="rgba(140,110,100,.55)";x.lineWidth=1;x.stroke()}}
+for(let n=Math.round(oo*8);n>0;n--){const u=R()*W,y=R()*H,g=x.createRadialGradient(u,y,0,u,y,34+R()*30);g.addColorStop(0,"rgba(255,255,255,"+(.6*oo)+")");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,W,H)}
+for(let n=Math.round(oo*22);n>0;n--){x.beginPath();x.arc(R()*W,R()*H,3+R()*3,0,7);x.fillStyle="rgba(255,226,120,.85)";x.fill()}}
+function drawFace(cv,seed,P,tone){const W=cv.width,H=cv.height,x=cv.getContext("2d"),R=rng(seed);
+const sc=mixc(mixc(tone,"#ffffff",.15),"#cfe3f7",P.bar*.35),epiB=mixc(tone,"#c4787a",.3),epi=mixc(epiB,"#b8453f",(1-P.calm)*.4),derm=mixc(mixc(tone,"#e8a9bd",.7),"#ffffff",.12);
+const jy=u=>H*.4+H*.035*Math.sin(u/W*Math.PI*4+.6),fy=u=>H*.77+H*.02*Math.sin(u/W*Math.PI*5+1.2),sh=H*(.06+.03*P.bar);
+x.clearRect(0,0,W,H);x.fillStyle=derm;x.fillRect(0,0,W,H);
+// epidermis
+x.beginPath();x.moveTo(0,0);x.lineTo(W,0);for(let u=W;u>=0;u-=4)x.lineTo(u,jy(u));x.closePath();x.fillStyle=epi;x.fill();
+// renewing cells in the epidermis
+x.strokeStyle="rgba(255,255,255,"+(.12+P.ren*.35)+")";x.lineWidth=1.5;
+for(let r=0;r<4;r++)for(let u=(r%2)*14+10;u<W;u+=28){const yy=sh+16+r*24;if(yy<jy(u)-16){x.beginPath();x.ellipse(u,yy,13,8,0,0,7);x.stroke()}}
+// stratum corneum with lipid "mortar"
+x.fillStyle=sc;x.fillRect(0,0,W,sh);x.strokeStyle="rgba(140,140,235,"+(.15+.7*P.bar)+")";x.lineWidth=2;
+for(let r=0;r<2;r++)for(let u=(r%2)*14;u<W;u+=28){x.strokeRect(u,r*sh/2,28,sh/2)}
+x.strokeStyle="rgba(255,255,255,.75)";x.lineWidth=3;x.beginPath();x.moveTo(0,sh);x.lineTo(W,sh);x.stroke();
+// skin-type signs: dryness cracks, oil/sebum, redness
+const dd=Math.max(0,(.5-P.hyd)/.5),R2=rng(seed*7+3);
+if(dd>0){x.fillStyle="rgba(235,225,215,"+(dd*.35)+")";x.fillRect(0,0,W,sh*1.2);
+for(let n=Math.round(dd*14)+3;n>0;n--){let u=R2()*W,y=0;x.beginPath();x.moveTo(u,y);for(let q=0;q<5;q++){u+=(R2()-.5)*16;y+=sh*.4+R2()*H*.025;x.lineTo(u,y)}x.strokeStyle="rgba(90,40,40,"+(.55+.3*dd)+")";x.lineWidth=2.5;x.stroke()}
+for(let n=Math.round(dd*18)+3;n>0;n--){const u=R2()*W,y=R2()*sh*.9,w=8+R2()*10;x.beginPath();x.moveTo(u,y);x.lineTo(u+w,y-3-R2()*4);x.lineTo(u+w*1.3,y+2);x.lineTo(u+w*.3,y+5);x.closePath();x.fillStyle="rgba(255,255,255,.88)";x.fill();x.strokeStyle="rgba(150,120,110,.6)";x.lineWidth=1;x.stroke()}}
+const oo=Math.max(0,(.3-P.clr)/.3);for(let n=Math.round(oo*10);n>0;n--){const u=R()*W,y=sh+10+R()*H*.18;x.beginPath();x.ellipse(u,y,6+R()*5,5+R()*4,0,0,7);x.fillStyle="rgba(255,226,120,.8)";x.fill();x.beginPath();x.arc(u-2,y-2,1.6,0,7);x.fillStyle="rgba(255,255,255,.9)";x.fill()}
+if(oo>.2){x.fillStyle="rgba(255,255,255,"+oo*.3+")";x.fillRect(0,0,W,sh*.45)}
+const rr=Math.max(0,(.3-P.calm)/.3);for(let n=Math.round(rr*16);n>0;n--){const u=R()*W,y=sh+8+(R()*.9)*(jy(u)-sh);x.beginPath();x.arc(u,y,2.5+R()*2,0,7);x.fillStyle="rgba(200,35,35,.75)";x.fill()}
+// fat layer
+x.save();x.beginPath();x.moveTo(0,H);x.lineTo(W,H);for(let u=W;u>=0;u-=4)x.lineTo(u,fy(u));x.closePath();x.fillStyle="#f3d46b";x.fill();x.clip();
+for(let r=0;r<4;r++)for(let u=(r%2)*22-10;u<W+30;u+=44){const cx=u+(R()-.5)*8,cy=H*.8+r*30+(R()-.5)*6;x.beginPath();x.ellipse(cx,cy,22,16,R()-.5,0,7);x.fillStyle="#f8e28d";x.fill();x.strokeStyle="#e0b94a";x.lineWidth=2;x.stroke()}
+x.restore();
+// dermis fibres
+x.save();x.beginPath();x.moveTo(0,0);for(let u=0;u<=W;u+=4)x.lineTo(u,jy(u));for(let u=W;u>=0;u-=4)x.lineTo(u,fy(u));x.closePath();x.clip();
+x.lineCap="round";x.lineWidth=15;x.strokeStyle="rgba(255,255,255,"+(.62+.33*P.rad)+")";
+for(let k=-1;k<9;k++){const u=k*W/8+(R()-.5)*14;x.beginPath();x.moveTo(u,H*.38);x.lineTo(u+120,H*.8);x.stroke();x.beginPath();x.moveTo(u+120,H*.38);x.lineTo(u,H*.8);x.stroke()}
+for(let k=0;k<6;k++){const u=(k+.5)*W/6+(R()-.5)*20,d=k%2?1:-1;x.beginPath();x.moveTo(u,H*.4);x.bezierCurveTo(u+34*d,H*.5,u-34*d,H*.62,u+10*d,H*.78);x.lineWidth=13;x.strokeStyle="#c97d12";x.stroke();x.lineWidth=8;x.strokeStyle=mixc("#e99a1c","#ffb23a",P.ren);x.stroke()}
+for(let k=0;k<7;k++)star(x,R()*W,H*.45+R()*H*.28,9+R()*5,"#6cb8ef","#2f7fd0");
+x.restore();
+// nerve endings
+x.strokeStyle="rgba(235,205,100,.95)";x.lineWidth=2;
+[.28,.7].forEach(f=>{const u=W*f;x.beginPath();x.moveTo(u,H*.7);x.bezierCurveTo(u+12,H*.55,u-10,H*.42,u+4,H*.3);x.stroke();x.beginPath();x.moveTo(u+4,H*.3);x.lineTo(u-16,H*.22);x.moveTo(u+4,H*.3);x.lineTo(u+20,H*.2);x.moveTo(u+2,H*.36);x.lineTo(u-18,H*.32);x.stroke()});
+// basal cells along the junction
+for(let u=8;u<W;u+=17){const y=jy(u);x.beginPath();x.ellipse(u,y,8,6,0,0,7);x.fillStyle="rgba(255,255,255,.92)";x.fill();x.strokeStyle="#8a6a6a";x.lineWidth=1;x.stroke();x.beginPath();x.arc(u,y,2,0,7);x.fillStyle="#b0403a";x.fill()}
+// pore with sebum plug
+const px=W*.72,pl=1-P.clr;x.fillStyle="rgba(70,60,60,.5)";x.fillRect(px-12,sh,24,H*.2);
+if(pl>.05){x.beginPath();x.ellipse(px,H*.24,4+10*pl,4+14*pl,0,0,7);x.fillStyle="#4a4540";x.fill()}
+// water droplets (hydration)
+for(let n=Math.round(P.hyd*16);n>0;n--){const u=R()*W,y=sh+14+R()*(fy(u)-sh-30);x.beginPath();x.arc(u,y,5,0,7);x.fillStyle="rgba(90,175,245,.88)";x.fill();x.strokeStyle="#fff";x.lineWidth=1;x.stroke();x.beginPath();x.arc(u-1.5,y-1.5,1.4,0,7);x.fillStyle="#fff";x.fill()}
+// radiance sparkles
+for(let n=Math.round(P.rad*9);n>0;n--)star(x,R()*W,sh+10+R()*(H*.3),6+R()*3,"#ffe27a","#e0b94a")}
+function Skin3D({L,tone}){const ref=useRef(),lv=useRef(L),[ok,setOk]=useState(true);lv.current=L;const tn=useRef(tone);tn.current=tone;
+useEffect(()=>{const el=ref.current,T=window.THREE;if(!T){setOk(false);return}
+let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){setOk(false);return}
+r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));r.setSize(el.clientWidth,el.clientHeight);el.appendChild(r.domElement);r.domElement.style.touchAction="pan-y";
+const sc=new T.Scene(),cam=new T.PerspectiveCamera(30,el.clientWidth/el.clientHeight,.1,100);const fit=()=>{const a=el.clientWidth/Math.max(1,el.clientHeight);cam.position.z=21*Math.max(1,.85/a)};fit();cam.lookAt(0,0,0);
+const root=new T.Group();sc.add(root);
+const cvs=[0,1,2].map(()=>{const c=document.createElement("canvas");c.width=c.height=512;return c});
+const tx=cvs.map(c=>{const t=new T.CanvasTexture(c);t.minFilter=T.LinearFilter;t.generateMipmaps=false;t.anisotropy=4;return t});
+const topM=new T.MeshBasicMaterial({map:tx[2],color:0xffffff}),mats=[new T.MeshBasicMaterial({map:tx[1],color:0xd6d6d6}),new T.MeshBasicMaterial({map:tx[1],color:0xc4c4c4}),topM,new T.MeshBasicMaterial({color:0xd9b84f}),new T.MeshBasicMaterial({map:tx[0],color:0xffffff}),new T.MeshBasicMaterial({map:tx[0],color:0xe2e2e2})];
+const geo=new T.BoxGeometry(5,5,5),cube=new T.Mesh(geo,mats);root.add(cube);
+root.add(new T.LineSegments(new T.EdgesGeometry(geo),new T.LineBasicMaterial({color:0x000000,transparent:true,opacity:.22})));
+const cur={};for(const k in L)cur[k]=L[k]/100;let last="";
+let rx=.62,ry=-.7,dg=false,lx=0,ly=0,id;
+const dn=e=>{dg=true;lx=e.clientX;ly=e.clientY},mv=e=>{if(!dg)return;ry+=(e.clientX-lx)*.01;rx=Math.max(-.2,Math.min(1.2,rx+(e.clientY-ly)*.01));lx=e.clientX;ly=e.clientY},up=()=>{dg=false};
+const c=r.domElement;c.addEventListener("pointerdown",dn);window.addEventListener("pointermove",mv);window.addEventListener("pointerup",up);
+const tick=()=>{id=requestAnimationFrame(tick);const t=lv.current;for(const k in cur)cur[k]+=(t[k]/100-cur[k])*.06;
+const key=Object.values(cur).map(v=>Math.round(v*20)).join(",")+tn.current;
+if(key!==last){last=key;drawFace(cvs[0],7,cur,tn.current);drawFace(cvs[1],13,cur,tn.current);drawTop(cvs[2],21,cur,tn.current);tx.forEach(q=>q.needsUpdate=true)}
+if(!dg)ry+=.004;root.rotation.set(rx,ry,0);r.render(sc,cam)};tick();
+const rs=()=>{r.setSize(el.clientWidth,el.clientHeight);cam.aspect=el.clientWidth/el.clientHeight;fit();cam.updateProjectionMatrix()};const ro=new ResizeObserver(rs);ro.observe(el);
+return()=>{cancelAnimationFrame(id);ro.disconnect();window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",up);c.removeEventListener("pointerdown",dn);tx.forEach(q=>q.dispose());r.dispose();if(c.parentNode===el)el.removeChild(c)}},[]);
+return h("div",{className:"three",ref:ref},!ok&&h("div",{className:"note",style:{padding:20}},"The 3D view needs WebGL, which isn’t available here."),h("div",{className:"hint"},"Drag to rotate · epidermis, dermis (collagen, elastin, fibroblasts) and fat layer"))}
+const FEAT={hyd:["Deep hydration","Humectants draw water into the outer layers so skin looks plumper and feels softer."],bar:["Barrier support","Lipids and supporting ingredients help skin hold water in and keep irritants out."],clr:["Clearer-looking pores","Oil-soluble acids and niacinamide help loosen buildup and refine the look of pores."],rad:["Radiance & even tone","Antioxidants and brightening actives help with dullness and the look of dark spots."],calm:["Soothing comfort","Soothing actives help skin feel calmer and more comfortable."],ren:["Skin renewal","Gentle exfoliation and vitamin A support cell turnover for smoother texture."]};
+// Typical ingredient science used in La Roche-Posay-style care for each skin type (educational assumptions, not a diagnosis).
+const TYPES={dry:["Dry","Feels tight, can look flaky",["ha","gly","cer","pan"]],oily:["Oily","Shiny, prone to clogged pores",["sal","lha","nia","gly"]],combo:["Combination","Oily T-zone, drier cheeks",["nia","ha","lha","gly"]],sens:["Sensitive","Reacts easily, can look red",["tsw","pan","mad","cer"]],norm:["Normal","Balanced, few concerns",["ha","nia","vc","tsw"]]};
+const CON={dull:["Dullness & uneven tone",["vc","mel","nia"]],spots:["Dark spots",["mel","nia"]],lines:["Fine lines",["ret","vc"]],pores:["Blemishes & pores",["sal","lha"]],red:["Redness",["mad","pan"]],flaky:["Flakiness",["cer","gly"]]};
+const TONES=["#f6d9c3","#efc3a0","#e0a97f","#c88b5e","#a8693e","#8a512f","#6a3b22","#4a2818"];
+const BASE={dry:{hyd:10,bar:20,clr:60,rad:40,calm:50,ren:30},oily:{hyd:50,bar:50,clr:15,rad:40,calm:50,ren:30},combo:{hyd:35,bar:40,clr:35,rad:40,calm:50,ren:30},sens:{hyd:40,bar:15,clr:60,rad:45,calm:10,ren:30},norm:{hyd:55,bar:60,clr:60,rad:50,calm:60,ren:40}};
+function rec(sts,cs){let ids=[];for(let i=0;i<4;i++)sts.forEach(t=>{const x=TYPES[t][2][i];if(x&&!ids.includes(x))ids.push(x)});
+cs.forEach(c=>CON[c][1].forEach(i=>{if(!ids.includes(i))ids.push(i)}));
+if(sts.includes("sens"))ids=ids.filter(i=>i!=="ret"&&i!=="sal");
+return ids.slice(0,8).map(id=>{const n=sts.filter(t=>TYPES[t][2].includes(id)).map(t=>TYPES[t][0].toLowerCase());return{id,why:(n.length?"For "+n.join(" & ")+" skin: ":"For your concerns: ")+ING[id].s+"."}})}
+// Typical laboratory reagent bottle: clear glass, narrow neck, screw cap, paper label.
+function Bkr({color}){const ref=useRef();
+useEffect(()=>{const el=ref.current,T=window.THREE;if(!T)return;let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){return}
+const w=el.clientWidth,hh=el.clientHeight;r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));r.setSize(w,hh);el.appendChild(r.domElement);
+const sc=new T.Scene(),cam=new T.PerspectiveCamera(30,w/hh,.1,50);cam.position.set(0,.5,9);cam.lookAt(0,.3,0);
+sc.add(new T.AmbientLight(0xffffff,.8));const dl=new T.DirectionalLight(0xffffff,.8);dl.position.set(3,5,5);sc.add(dl);
+const g=new T.Group();sc.add(g);g.rotation.x=.12;const V=(a)=>a.map(p=>new T.Vector2(p[0],p[1]));
+const gm=new T.MeshStandardMaterial({color:0xcfe6fa,transparent:true,opacity:.28,roughness:.1,side:T.DoubleSide,depthWrite:false});
+g.add(new T.Mesh(new T.LatheGeometry(V([[0,-1.3],[.9,-1.3],[1,-1.2],[1,.6],[.9,.9],[.5,1.1],[.33,1.2],[.33,1.55],[.4,1.6]]),36),gm));
+const lq=new T.Mesh(new T.LatheGeometry(V([[0,-1.25],[.88,-1.25],[.95,-1.15],[.95,.25],[0,.25]]),36),new T.MeshStandardMaterial({color,transparent:true,opacity:.88,roughness:.25}));g.add(lq);
+const cap=new T.Mesh(new T.CylinderGeometry(.46,.46,.4,24),new T.MeshStandardMaterial({color:0x2f7fd0,roughness:.5}));cap.position.y=1.78;g.add(cap);
+const lab=new T.Mesh(new T.CylinderGeometry(1.02,1.02,.95,36,1,true),new T.MeshStandardMaterial({color:0xffffff,roughness:.8,side:T.DoubleSide}));lab.position.y=-.45;g.add(lab);
+const st=new T.Mesh(new T.CylinderGeometry(1.03,1.03,.2,36,1,true),new T.MeshStandardMaterial({color:0x2f7fd0,side:T.DoubleSide}));st.position.y=-.1;g.add(st);
+const bm=new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.7}),bs=[0,1,2].map(i=>{const m=new T.Mesh(new T.SphereGeometry(.06,8,8),bm);m.userData={x:-.4+i*.4,z:(i%2?.3:-.3),y:-1+i*.4};g.add(m);return m});
+let id;const tick=()=>{id=requestAnimationFrame(tick);g.rotation.y+=.012;bs.forEach(m=>{const u=m.userData;u.y+=.01;if(u.y>.2)u.y=-1.1;m.position.set(u.x,u.y,u.z)});r.render(sc,cam)};tick();
+return()=>{cancelAnimationFrame(id);r.dispose();if(r.domElement.parentNode===el)el.removeChild(r.domElement)}},[]);
+return h("div",{className:"b3",ref})}
+const Vl=({c})=>h("svg",{viewBox:"0 0 60 110",width:40,height:72,style:{display:"block",margin:"0 auto 8px"}},h("rect",{x:22,y:2,width:16,height:12,rx:3,fill:"#2f7fd0"}),h("path",{d:"M8 62V96Q8 106 18 106H42Q52 106 52 96V62Z",fill:c,opacity:.9}),h("path",{d:"M24 14V28Q8 36 8 52V96Q8 106 18 106H42Q52 106 52 96V52Q52 36 36 28V14Z",fill:"rgba(207,230,250,.35)",stroke:"#8ec5f5",strokeWidth:1.5}),h("rect",{x:12,y:68,width:36,height:26,rx:2,fill:"#fff"}),h("rect",{x:12,y:68,width:36,height:5,fill:c}));
+// 3D shelf bottles: one shared WebGL renderer draws every bottle into its own 2D canvas (keeps the page under the browser's WebGL context limit).
+const BK={ents:new Set(),r:null,raf:0};
+function bkInit(){const T=window.THREE;if(BK.r)return BK.r;if(!T){BK.r=-1;return -1}let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){BK.r=-1;return -1}
+const W=120,H=170,dpr=Math.min(window.devicePixelRatio||1,2);r.setPixelRatio(dpr);r.setSize(W,H);
+const sc=new T.Scene(),cam=new T.PerspectiveCamera(30,W/H,.1,50);cam.position.set(0,.5,9);cam.lookAt(0,.3,0);
+sc.add(new T.AmbientLight(0xffffff,.8));const dl=new T.DirectionalLight(0xffffff,.8);dl.position.set(3,5,5);sc.add(dl);
+const g=new T.Group();sc.add(g);g.rotation.x=.12;const V=a=>a.map(p=>new T.Vector2(p[0],p[1]));
+g.add(new T.Mesh(new T.LatheGeometry(V([[0,-1.3],[.9,-1.3],[1,-1.2],[1,.6],[.9,.9],[.5,1.1],[.33,1.2],[.33,1.55],[.4,1.6]]),36),new T.MeshStandardMaterial({color:0xcfe6fa,transparent:true,opacity:.28,roughness:.1,side:T.DoubleSide,depthWrite:false})));
+const lq=new T.Mesh(new T.LatheGeometry(V([[0,-1.25],[.88,-1.25],[.95,-1.15],[.95,.25],[0,.25]]),36),new T.MeshStandardMaterial({color:0x6cc0ff,transparent:true,opacity:.88,roughness:.25}));g.add(lq);
+const cap=new T.Mesh(new T.CylinderGeometry(.46,.46,.4,24),new T.MeshStandardMaterial({color:0x2f7fd0,roughness:.5}));cap.position.y=1.78;g.add(cap);
+const lab=new T.Mesh(new T.CylinderGeometry(1.02,1.02,.95,36,1,true),new T.MeshStandardMaterial({color:0xffffff,roughness:.8,side:T.DoubleSide}));lab.position.y=-.45;g.add(lab);
+const st=new T.Mesh(new T.CylinderGeometry(1.03,1.03,.2,36,1,true),new T.MeshStandardMaterial({color:0x2f7fd0,side:T.DoubleSide}));st.position.y=-.1;g.add(st);
+const bm=new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.7}),bs=[0,1,2].map(i=>{const m=new T.Mesh(new T.SphereGeometry(.06,8,8),bm);m.userData={x:-.4+i*.4,z:(i%2?.3:-.3),o:i*.4};g.add(m);return m});
+Object.assign(BK,{r,sc,cam,g,lq,bs,W,H,dpr});return r}
+function bkLoop(){BK.raf=requestAnimationFrame(bkLoop);const t=performance.now()/1000;
+BK.ents.forEach(e=>{if(!e.vis)return;BK.lq.material.color.set(e.col());BK.g.rotation.y=t*.7+e.ph;BK.bs.forEach(m=>{const u=m.userData;m.position.set(u.x,((t*.3+u.o)%1.3)-1.1,u.z)});BK.r.render(BK.sc,BK.cam);e.ctx.clearRect(0,0,e.cv.width,e.cv.height);e.ctx.drawImage(BK.r.domElement,0,0,e.cv.width,e.cv.height)})}
+function Bk3({color}){const ref=useRef(),cl=useRef(color),[fb,setFb]=useState(false);cl.current=color;
+useEffect(()=>{const cv=ref.current;if(!cv)return;if(bkInit()===-1){setFb(true);return}
+cv.width=BK.W*BK.dpr;cv.height=BK.H*BK.dpr;const e={cv,ctx:cv.getContext("2d"),col:()=>cl.current,ph:Math.random()*6,vis:true},io=new IntersectionObserver(en=>{e.vis=en[0].isIntersecting});io.observe(cv);
+BK.ents.add(e);if(!BK.raf)BK.raf=requestAnimationFrame(bkLoop);
+return()=>{io.disconnect();BK.ents.delete(e);if(!BK.ents.size){cancelAnimationFrame(BK.raf);BK.raf=0}}},[]);
+return fb?h(Vl,{c:color}):h("canvas",{ref,style:{width:72,height:102,display:"block",margin:"0 auto 8px"}})}
+const GB=({c,n})=>h("div",null,h("svg",{viewBox:"0 0 60 110",width:70,height:128},h("rect",{x:22,y:2,width:16,height:12,rx:3,fill:"#2f7fd0"}),h("path",{d:"M8 62V96Q8 106 18 106H42Q52 106 52 96V62Z",fill:c,opacity:.9}),h("path",{d:"M24 14V28Q8 36 8 52V96Q8 106 18 106H42Q52 106 52 96V52Q52 36 36 28V14Z",fill:"rgba(207,230,250,.35)",stroke:"#8ec5f5",strokeWidth:1.5}),h("rect",{x:12,y:68,width:36,height:26,rx:2,fill:"#fff"}),h("rect",{x:12,y:68,width:36,height:5,fill:c}),h("rect",{x:17,y:78,width:26,height:2.5,fill:"#c5d3e0"}),h("rect",{x:17,y:84,width:18,height:2.5,fill:"#c5d3e0"})),h("div",null,n));
+// Recommendation maths: compare the beaker's effect profile with each formula's profile (cosine similarity) and its ingredient overlap (Dice).
+const pe=p=>{const v={};MET.forEach(([k])=>v[k]=p.i.reduce((s,i)=>s+(ING[i].e[k]||0),0));return v};
+const cosv=(a,b)=>{let d=0,x=0,y=0;MET.forEach(([k])=>{d+=a[k]*b[k];x+=a[k]*a[k];y+=b[k]*b[k]});return x&&y?d/Math.sqrt(x*y):0};
+function score(p,bk,sts){const hit=p.i.filter(i=>bk.includes(i)),dice=2*hit.length/(bk.length+p.i.length),bv={};MET.forEach(([k])=>bv[k]=bk.reduce((s,i)=>s+(ING[i].e[k]||0),0));
+let s=.55*cosv(bv,pe(p))+.45*dice;const flag=sts.includes("sens")&&p.i.some(i=>i==="ret"||i==="sal");if(flag)s*=.75;
+return{p,hit,flag,pct:Math.round(Math.min(.99,s)*100),miss:bk.filter(i=>!p.i.includes(i)),extra:p.i.filter(i=>!bk.includes(i)),pv:pe(p)}}
+// Base formula per skin type / concern: only the 3 key ingredients (Thermal Spring Water, Melasyl, Niacinamide).
+const BASE_T={dry:["tsw","nia"],oily:["nia","mel"],combo:["tsw","nia"],sens:["mel","nia"],norm:["tsw","mel"]};
+const BASE_C={dull:["mel","nia"],spots:["mel","nia"],lines:["tsw","nia"],pores:["nia"],red:["tsw","nia"],flaky:["tsw","nia"]};
+function baseFor(sts,cs){const u=new Set();sts.forEach(t=>BASE_T[t].forEach(i=>u.add(i)));cs.forEach(c=>BASE_C[c].forEach(i=>u.add(i)));return["tsw","mel","nia"].filter(i=>u.has(i))}
+const av=o=>Math.round(MET.reduce((a,[k])=>a+o[k],0)/MET.length);
+// Smooth-scroll to a section; waits (up to ~2s) for it to be rendered first.
+const goTo=(id,tries=0)=>{const el=document.getElementById(id);if(!el){if(tries<20)setTimeout(()=>goTo(id,tries+1),100);return}
+const rm=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches,aim=b=>el.scrollIntoView({behavior:b,block:"start"});
+aim(rm?"auto":"smooth");
+// content can change height while scrolling (bars fill, cards appear), so check once more and re-aim if the section is not at the top
+setTimeout(()=>{const off=parseFloat(getComputedStyle(el).scrollMarginTop)||0;if(Math.abs(el.getBoundingClientRect().top-off)>6)aim(rm?"auto":"smooth")},900)};
+const Sec=({n,t,d,id,children})=>h("section",{className:"sec",id},h("div",{className:"sh"},h("h2",null,t),d&&h("p",null,d)),children);
+function Pip({L,base,tone,setTone,st,sk,wk,big,setBig,min,setMin}){const[pos,setPos]=useState(null),[sz,setSz]=useState(1),[dim,setDim]=useState({w:null,h:null}),ref=useRef(),W=[460,580,780][sz],Hh=[220,300,430][sz],dec=()=>{setDim({w:null,h:null});if(min)return;if(sz>0)setSz(sz-1);else setMin(true)},inc=()=>{setDim({w:null,h:null});if(min){setMin(false);return}if(sz<2)setSz(sz+1)};
+const rz=dir=>e=>{e.preventDefault();e.stopPropagation();const r=ref.current.getBoundingClientRect(),sx=e.clientX,sy=e.clientY,L0=r.left,T0=r.top,W0=r.width,H0=r.height,mnW=300,mnH=360;
+const mv=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;let l=L0,t=T0,w=W0,hh=H0;
+if(dir.includes("e"))w=Math.max(mnW,Math.min(window.innerWidth-L0,W0+dx));
+if(dir.includes("w")){w=Math.max(mnW,Math.min(L0+W0,W0-dx));l=L0+W0-w}
+if(dir.includes("s"))hh=Math.max(mnH,Math.min(window.innerHeight-T0,H0+dy));
+if(dir.includes("n")){hh=Math.max(mnH,Math.min(T0+H0,H0-dy));t=T0+H0-hh}
+setPos({x:l,y:t});setDim({w,h:hh})};
+const up=()=>{window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",up)};window.addEventListener("pointermove",mv);window.addEventListener("pointerup",up)};
+const start=e=>{if(e.target.closest("button"))return;const r=ref.current.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;
+const mv=ev=>setPos({x:Math.max(0,Math.min(window.innerWidth-r.width,ev.clientX-ox)),y:Math.max(0,Math.min(window.innerHeight-48,ev.clientY-oy))});
+const up=()=>{window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",up)};window.addEventListener("pointermove",mv);window.addEventListener("pointerup",up)};
+return h("div",{ref,className:"pip"+(dim.h&&!min?" rs":""),style:Object.assign({width:dim.w?dim.w+"px":"min("+W+"px,calc(100vw - 24px))","--ph":Hh+"px"},dim.h&&!min?{height:dim.h+"px"}:{},pos?{left:pos.x,top:pos.y,right:"auto",bottom:"auto"}:{})},
+h("div",{className:"ph",onPointerDown:start},h("span",null,"⠿ Your skin · "+st),h("span",{className:"dh"},wk||"Drag to move"),h("span",null,h("button",{onClick:dec,"aria-label":"Smaller",disabled:min},"−"),h("button",{onClick:inc,"aria-label":"Larger",disabled:!min&&sz===2},"+"))),
+!min&&h(Skin3D,{L,tone}),
+!min&&h("div",{style:{padding:"8px 14px",fontSize:"13px",lineHeight:1.5}},sk.map(k=>h("div",{key:k,style:{marginBottom:4}},h("b",null,TYPES[k][0]+": "),TYPES[k][1]))),
+!min&&h("div",{className:"pt"},h("span",{className:"pl"},"Skin tone"),TONES.map(c=>h("button",{key:c,className:"sw s"+(tone===c?" on":""),style:{background:c},onClick:()=>setTone(c),"aria-label":"Skin tone"}))),
+!min&&["n","s","e","w","ne","nw","se","sw"].map(d=>h("div",{key:d,className:"rz rz-"+d,onPointerDown:rz(d),"aria-hidden":"true"})))}
+function App(){const[sts,setSts]=useState([]),[cs,setCs]=useState([]),[tone,setTone]=useState(TONES[2]),[busy,setBusy]=useState(false),[sel,setSel]=useState(null),[bk,setBk]=useState([]),[drops,setDrops]=useState([]),[drag,setDrag]=useState(null),[over,setOver]=useState(false),[big,setBig]=useState(false),[min,setMin]=useState(false),[prog,setProg]=useState(0),[mode,setMode]=useState(null),[wk,setWk]=useState(null),[show,setShow]=useState(false);
+const BI=baseFor(sts,cs),pb=useRef([]);useEffect(()=>{const old=pb.current;pb.current=BI;setBk(b=>[...BI,...b.filter(x=>!old.includes(x)&&!BI.includes(x))])},[BI.join()]);
+const br=useRef(),tm=useRef([]),iv=useRef(),ar=useRef(false),res=sts.length?rec(sts,cs):null,shelf=res?[...res.filter(p=>!BI.includes(p.id)).map(p=>({...p,rc:1})),...Object.keys(ING).filter(k=>!res.some(p=>p.id===k)&&!BI.includes(k)).map(id=>({id,rc:0,why:"Not a core pick for your skin type: "+ING[id].s+"."}))]:[],sl=res&&(ING[sel]&&!BI.includes(sel)?sel:shelf[0].id);
+const[calc,setCalc]=useState(false),[fin,setFin]=useState(false),finT=useRef(),ownSc=useRef(false),pend=useRef(false),bkKey=bk.join();useEffect(()=>{if(!bk.length)return;setCalc(true);const t=setTimeout(()=>setCalc(false),1100);return()=>clearTimeout(t)},[bkKey]);
+// Flow: mix -> jump to "In your beaker" -> calculate there -> jump to "Best product".
+const showResults=()=>{clearTimeout(finT.current);setShow(true);setFin(true);goTo("inbeaker");finT.current=setTimeout(()=>{setFin(false);finT.current=setTimeout(()=>goTo("results"),250)},2400)};
+useEffect(()=>{if(!pend.current)return;if(!bk.some(x=>!BI.includes(x))){pend.current=false;return}const t=setTimeout(()=>{pend.current=false;showResults()},2200);return()=>clearTimeout(t)},[bkKey]);
+useEffect(()=>{if(ar.current)return;clearInterval(iv.current);if(!bk.some(x=>!BI.includes(x))){setProg(0);setWk(null);return}const t=setTimeout(()=>{let v=0;setProg(0);setWk(0);iv.current=setInterval(()=>{v=Math.min(1,v+.025);setProg(v);setWk(Math.round(v*8));if(v>=1)clearInterval(iv.current)},120)},700);return()=>clearTimeout(t)},[bkKey]);
+const B0=Object.fromEntries(MET.map(([k])=>[k,sts.length?sts.reduce((a,t)=>a+BASE[t][k],0)/sts.length:0]));
+const L=Object.fromEntries(MET.map(([k])=>[k,Math.min(100,bk.reduce((s,i)=>s+(ING[i].e[k]||0),0)*30)]));
+const S=sts.length?Object.fromEntries(MET.map(([k])=>[k,Math.min(100,sts.reduce((a,t)=>a+BASE[t][k],0)/sts.length+L[k]*.7*prog)])):L;
+const add=id=>{if(!ar.current)pend.current=true;setBk(b=>b.includes(id)?b:[...b,id]);const k=Math.random();setDrops(d=>[...d,{k,id}]);setTimeout(()=>setDrops(d=>d.filter(x=>x.k!==k)),1500)};
+const pick=k=>{pend.current=false;setShow(false);setMode(null);const first=!sts.length;setSts(a=>a.includes(k)?a.filter(x=>x!==k):[...a,k]);setSel(null);tm.current.forEach(clearTimeout);clearInterval(iv.current);clearTimeout(finT.current);setFin(false);ownSc.current=false;ar.current=false;setProg(0);setWk(null);setBusy(true);setTimeout(()=>setBusy(false),800)};
+const auto=()=>{pend.current=false;setShow(false);setMode("auto");goTo("inbeaker");tm.current.forEach(clearTimeout);clearInterval(iv.current);clearTimeout(finT.current);setFin(false);ar.current=true;setBk(BI);setProg(0);setWk(0);const ids=res.filter(p=>!BI.includes(p.id)).slice(0,4);ids.forEach((p,i)=>tm.current.push(setTimeout(()=>{add(p.id);setSel(p.id)},500+i*1400)));tm.current.push(setTimeout(showResults,500+ids.length*1400+300));tm.current.push(setTimeout(()=>{let v=0;iv.current=setInterval(()=>{v=Math.min(1,v+.025);setProg(v);setWk(Math.round(v*8));if(v>=1){clearInterval(iv.current);ar.current=false}},120)},500+ids.length*1400))};
+const own=()=>{emptyB();setShow(false);setMode("own");goTo("lab")};
+const emptyB=()=>{pend.current=false;tm.current.forEach(clearTimeout);clearInterval(iv.current);clearTimeout(finT.current);setFin(false);ownSc.current=false;ar.current=false;setProg(0);setWk(null);setBk(BI)};
+const inB=ev=>{const r=br.current.getBoundingClientRect();return ev.clientX>r.left&&ev.clientX<r.right&&ev.clientY>r.top&&ev.clientY<r.bottom};
+function down(e,id){const sx=e.clientX,sy=e.clientY;let mv=false;setSel(id);
+const m=ev=>{if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>6){mv=true;setDrag({id,x:ev.clientX,y:ev.clientY});setOver(inB(ev))}};
+const u=ev=>{window.removeEventListener("pointermove",m);window.removeEventListener("pointerup",u);window.removeEventListener("pointercancel",u);setDrag(null);setOver(false);if(mv&&inB(ev))add(id)};
+window.addEventListener("pointermove",m);window.addEventListener("pointerup",u);window.addEventListener("pointercancel",u)}
+const rank=bk.length?PROD.map(p=>score(p,bk,sts)).sort((a,b)=>b.pct-a.pct):[],best=rank[0]&&rank[0].hit.length?rank[0]:null,alts=rank.slice(1).filter(r=>r.hit.length).slice(0,2),warn=bk.filter(i=>ING[i].w),cmpK=MET.filter(([k])=>L[k]>0).sort((a,b)=>L[b[0]]-L[a[0]]).slice(0,3),top=MET.filter(([k])=>L[k]>0).sort((a,b)=>L[b[0]]-L[a[0]]).slice(0,3);
+return h("div",{className:"wrap"},
+h("div",{className:"scr"},h("header",{className:"top"},h("h1",null,"Skin ",h("span",null,"Lab"))),
+h(Sec,{id:"skin",n:"01",t:"Tell Us About Your Skin",d:"Pick one or more skin types. Your lab and a live skin model appear instantly; you can change skin tone inside the model."},
+h("div",{className:"lbl"},"Skin type (choose one or more)"),h("div",{className:"feels"},Object.entries(TYPES).map(([k,[n,d]])=>h("button",{key:k,className:"feel"+(sts.includes(k)?" on":""),onClick:()=>pick(k)},h("b",null,n),h("small",null,d)))),
+
+h("div",{className:"lbl"},"Any concerns? (optional)"),h("div",{className:"sws"},Object.entries(CON).map(([k,[n]])=>h("button",{key:k,className:"cn"+(cs.includes(k)?" on":""),onClick:()=>setCs(c=>c.includes(k)?c.filter(x=>x!==k):[...c,k])},n))),
+busy&&h("div",{style:{overflow:"hidden",marginTop:24}},h("div",{className:"scan"})))),
+res&&h(Sec,{id:"lab",n:"02",t:"The Lab",d:"Build your own blend. Ingredients for "+sts.map(k=>TYPES[k][0].toLowerCase()).join(" + ")+" skin come first, but you choose what goes in the beaker."},
+h("div",{className:"bench"},
+h("div",{className:"card p2"},h("div",{ref:br},h(Beaker,{items:bk,drops,over})),
+h("div",{className:"row"},h("button",{className:mode==="own"?"g":"",onClick:auto},"▶ Auto-mix recommended"),h("button",{className:mode==="own"?"":"g",onClick:own},"Mix my own ingredients"),h("button",{className:"g",disabled:bk.length<=BI.length&&prog===0,onClick:()=>{emptyB();setMode("own")}},"Empty beaker")),
+mode==="own"&&h("div",{className:"note",style:{marginTop:14}},"Choose ingredients from the shelf and drag them into the beaker. Once you have added them, give it a moment: the page jumps to “In your beaker”, calculates your match, then moves on to your best product."),
+h("div",{className:"note",style:{marginTop:14}},"Drag an ingredient into the beaker. Molecules are stylized and not to scale.")),
+h("div",{className:"card p2 shc"},h("div",{className:"shin"},h("div",{className:"lbl",style:{margin:"0 0 14px"}},"Ingredient shelf"),
+h("div",{id:"shelfgrid",className:"shelf2"+(mode==="own"?" own":"")},shelf.map((p,i)=>h("div",{key:sts.join()+p.id,className:"vial"+(p.rc?" rc":"")+(sl===p.id?" sel":"")+(bk.includes(p.id)?" used":""),style:{animationDelay:Math.min(i,8)*.06+"s"},onPointerDown:e=>down(e,p.id)},h(Bk3,{color:ING[p.id].c}),h("b",null,ING[p.id].n)))),
+h("div",{className:"det"},h("b",null,ING[sl].n),ING[sl].t?h("div",{style:{color:"var(--blue)",fontWeight:600,margin:"4px 0 10px"}},ING[sl].t):h("br"),ING[sl].sci,ING[sl].w&&h("div",{style:{marginTop:8}},"⚠ ",ING[sl].w),h("div",{className:"row"},h("button",{className:"chip",disabled:BI.includes(sl),onClick:()=>bk.includes(sl)?(pend.current=true,setBk(b=>b.filter(x=>x!==sl))):add(sl)},BI.includes(sl)?"Always in your beaker":bk.includes(sl)?"Remove from beaker":"＋ Add to beaker"))))))),
+(mode||show)&&h(Sec,{id:"inbeaker",t:"In Your Beaker",d:"What is in your beaker right now and what the blend does for your skin."},
+h("div",{className:"card p2 side"},h("h3",null,"In your beaker"),
+h("div",null,bk.map(i=>h("span",{key:i,className:"ic hit",style:{background:ING[i].c,borderColor:ING[i].c,color:"#0f2a43"}},ING[i].n)),h("div",{className:"note",style:{marginTop:10}},"Your base formula for "+sts.map(k=>TYPES[k][0].toLowerCase()).join(" + ")+" skin ("+BI.map(i=>ING[i].n).join(", ")+") is always in the beaker. Add more from the shelf.")),
+h("h3",null,"Your 3 key features"),
+top.length?h("div",null,top.map(([k],i)=>h("div",{className:"feat",key:k,style:{animationDelay:i*.15+"s"}},h("div",{className:"fn"},i+1),h("div",null,h("b",null,FEAT[k][0]),h("div",{className:"bar"},h("i",{style:{width:L[k]+"%"}})),h("p",null,FEAT[k][1]),h("small",null,"From: "+bk.filter(x=>ING[x].e[k]).map(x=>ING[x].n).join(", ")))))):h("div",{className:"note"},"Add ingredients to reveal what your blend does."),
+warn.length>0&&h("div",null,h("h3",null,"Good to know"),warn.map(i=>h("div",{key:i,className:"note"},"⚠ ",h("b",null,ING[i].n),": ",ING[i].w))),
+fin&&h("div",{style:{marginTop:40}},h("div",{className:"note",style:{marginBottom:16}},h("span",{className:"spin"},"◐")," Calculating your match across "+PROD.length+" formulas…"),h("div",{style:{overflow:"hidden"}},h("div",{className:"scan"}))))),
+sts.length>0&&h(Pip,{L:S,base:B0,tone,setTone,st:sts.map(k=>TYPES[k][0]).join(" + "),sk:sts,wk:wk==null?"":"Week "+wk+" of 8",big,setBig,min,setMin}),
+res&&show&&bk.length>0&&h(Sec,{id:"results",n:"03",t:"Best Product for Your Skin",d:"The closest La Roche-Posay formulas to the "+bk.length+" ingredient"+(bk.length>1?"s":"")+" in your beaker."},
+(calc||fin)?h("div",{className:"card"},h("div",{className:"note",style:{marginBottom:16}},h("span",{className:"spin"},"◐")," Calculating your match across "+PROD.length+" formulas…"),h("div",{style:{overflow:"hidden"}},h("div",{className:"scan"}))):
+best?h("div",null,
+h("div",{className:"card rec"},h("div",{className:"tag"},"Recommended for your mix"),
+h("div",{className:"rh"},h("div",null,h("h3",null,best.p.n),h("div",{className:"note"},best.p.f)),h("div",{className:"pct"},best.pct,h("small",null,"% match"))),
+h("div",{className:"bar"},h("i",{style:{width:best.pct+"%"}})),
+h("div",{style:{marginTop:18}},best.p.i.map(x=>h("span",{key:x,className:"ic"+(bk.includes(x)?" hit":"")},ING[x].n))),
+h("div",{className:"cmp"},cmpK.map(([k,l])=>h("div",{key:k},h("div",{className:"lab"},h("span",null,l),h("span",null,"your mix · formula")),h("div",{className:"bar"},h("i",{style:{width:L[k]+"%"}})),h("div",{className:"bar"},h("i",{style:{width:Math.min(100,best.pv[k]*30)+"%",background:"linear-gradient(90deg,#9fe0c4,#4cb88f)"}}))))),
+h("div",null,h("div",{className:"lbl",style:{margin:"80px 0 12px"}},"How it matches your ingredients"),bk.map(x=>{const inF=best.p.i.includes(x);return h("div",{key:x,className:"mrow"+(inF?"":" no")},h("span",{className:"ic"+(inF?" hit":"")},ING[x].n),h("span",null,inF?"In this formula: "+ING[x].s+".":"Not in this formula."))}),best.extra.length>0&&h("div",{className:"note",style:{marginTop:12}},"The formula also adds: "+best.extra.map(x=>ING[x].n).join(", ")+".")),
+best.flag&&h("div",{className:"note",style:{marginTop:10}},"⚠ This formula contains an exfoliating active, which may be too strong for sensitive skin. Start slowly or ask a dermatologist.")),
+alts.length>0&&h("div",null,h("div",{className:"lbl"},"Other close matches"),h("div",{className:"pg"},alts.map((a,i)=>h("div",{key:a.p.n,className:"card prod",style:{animationDelay:i*.2+"s"}},h("div",{style:{display:"flex",justifyContent:"space-between",gap:12}},h("b",{style:{fontSize:20}},a.p.n),h("b",{style:{color:"var(--blue)",fontSize:20}},a.pct+"%")),h("div",{className:"note"},a.p.f),h("div",null,a.p.i.map(x=>h("span",{key:x,className:"ic"+(bk.includes(x)?" hit":"")},ING[x].n))),h("div",{className:"note"},"Matches through ",a.hit.map(x=>ING[x].n).join(" + "),".")))))):
+h("div",{className:"note"},"No formula closely matches this mix yet. Try adding another ingredient."),
+h("div",{className:"note",style:{marginTop:80}},"PROTOTYPE DATA: product names, ingredient lists and the match score are illustrative samples for a design concept; confirm on the official La Roche-Posay site. If you use retinol, vitamin C or exfoliating acids, pair with daily SPF. This is educational information, not medical advice; see a dermatologist for persistent or severe skin concerns.")),
+drag&&h("div",{className:"ghost gb",style:{left:drag.x,top:drag.y}},h(GB,{c:ING[drag.id].c,n:ING[drag.id].n})))}
+ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+</script></body></html>
