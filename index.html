@@ -1,4 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Skin Lab</title>
+<meta name="description" content="An interactive skin-care lab: pick your skin type, mix ingredients, and explore a 3D skin model.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
@@ -143,17 +144,92 @@ h("path",{d:"M62 36Q72 40 72 40M198 36Q188 40 188 40M62 36H198",fill:"none",stro
 [80,100,120,140,160,180,200].map((y,k)=>h("line",{key:k,x1:72,x2:k%2?82:90,y1:y+28,y2:y+28,stroke:"#8ec5f5",strokeWidth:1.5})),
 h("path",{d:"M82 54V255",stroke:"#fff",strokeWidth:5,strokeLinecap:"round",opacity:.85}),
 drops.map(d=>h("g",{key:d.k},h("circle",{className:"drop",cx:130,cy:50,r:6,fill:ING[d.id].c}),h("ellipse",{className:"rip",cx:130,cy:ly+4,rx:14,ry:3,fill:"none",stroke:ING[d.id].c,strokeWidth:2,style:{animationDelay:".55s",opacity:0}}))))}
+// Skin cross-section in the style of an anatomical isometric block: stratum corneum, epidermis, wavy junction with basal cells,
+// dermis (collagen, elastin, fibroblasts, nerves) and a fat layer. Faces are drawn on canvas textures and react to the meters.
+const hx=c=>[parseInt(c.substr(1,2),16),parseInt(c.substr(3,2),16),parseInt(c.substr(5,2),16)];
+const mixc=(a,b,t)=>{const A=hx(a),B=hx(b);return"#"+A.map((v,i)=>("0"+Math.round(v+(B[i]-v)*t).toString(16)).slice(-2)).join("")};
+const rng=s=>()=>(s=(s*16807)%2147483647)/2147483647;
+function star(x,cx,cy,r,fill,stroke){x.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,rr=i%2?r*.38:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}x.closePath();x.fillStyle=fill;x.fill();if(stroke){x.strokeStyle=stroke;x.lineWidth=1;x.stroke()}}
+function drawTop(cv,seed,P,tone){const W=cv.width,H=cv.height,x=cv.getContext("2d"),R=rng(seed),dd=Math.max(0,(.5-P.hyd)/.5),oo=Math.max(0,(.3-P.clr)/.3),rr=Math.max(0,(.3-P.calm)/.3);
+x.fillStyle=mixc(mixc(tone,"#ffffff",.12),"#e6ddd5",dd*.4);x.fillRect(0,0,W,H);
+x.fillStyle="rgba(80,40,30,.12)";for(let n=0;n<70;n++){x.beginPath();x.arc(R()*W,R()*H,1.5+R()*1.5,0,7);x.fill()}
+for(let n=Math.round(rr*14);n>0;n--){const u=R()*W,y=R()*H,g=x.createRadialGradient(u,y,0,u,y,30+R()*30);g.addColorStop(0,"rgba(200,35,35,"+(.45*rr)+")");g.addColorStop(1,"rgba(200,35,35,0)");x.fillStyle=g;x.fillRect(0,0,W,H)}
+if(dd>0){x.lineCap="round";for(let n=Math.round(dd*26)+6;n>0;n--){let u=R()*W,y=R()*H;x.beginPath();x.moveTo(u,y);for(let q=0;q<5;q++){u+=(R()-.5)*50;y+=(R()-.5)*50;x.lineTo(u,y)}x.strokeStyle="rgba(100,55,45,"+(.35+.3*dd)+")";x.lineWidth=2;x.stroke()}
+for(let n=Math.round(dd*60)+10;n>0;n--){const u=R()*W,y=R()*H,w=8+R()*14;x.beginPath();x.moveTo(u,y);x.lineTo(u+w,y-4-R()*6);x.lineTo(u+w*1.2,y+3);x.lineTo(u+w*.3,y+8);x.closePath();x.fillStyle="rgba(255,255,255,.85)";x.fill();x.strokeStyle="rgba(140,110,100,.55)";x.lineWidth=1;x.stroke()}}
+for(let n=Math.round(oo*8);n>0;n--){const u=R()*W,y=R()*H,g=x.createRadialGradient(u,y,0,u,y,34+R()*30);g.addColorStop(0,"rgba(255,255,255,"+(.6*oo)+")");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,W,H)}
+for(let n=Math.round(oo*22);n>0;n--){x.beginPath();x.arc(R()*W,R()*H,3+R()*3,0,7);x.fillStyle="rgba(255,226,120,.85)";x.fill()}}
+function drawFace(cv,seed,P,tone){const W=cv.width,H=cv.height,x=cv.getContext("2d"),R=rng(seed);
+const sc=mixc(mixc(tone,"#ffffff",.15),"#cfe3f7",P.bar*.35),epiB=mixc(tone,"#c4787a",.3),epi=mixc(epiB,"#b8453f",(1-P.calm)*.4),derm=mixc(mixc(tone,"#e8a9bd",.7),"#ffffff",.12);
+const jy=u=>H*.4+H*.035*Math.sin(u/W*Math.PI*4+.6),fy=u=>H*.77+H*.02*Math.sin(u/W*Math.PI*5+1.2),sh=H*(.06+.03*P.bar);
+x.clearRect(0,0,W,H);x.fillStyle=derm;x.fillRect(0,0,W,H);
+// epidermis
+x.beginPath();x.moveTo(0,0);x.lineTo(W,0);for(let u=W;u>=0;u-=4)x.lineTo(u,jy(u));x.closePath();x.fillStyle=epi;x.fill();
+// renewing cells in the epidermis
+x.strokeStyle="rgba(255,255,255,"+(.12+P.ren*.35)+")";x.lineWidth=1.5;
+for(let r=0;r<4;r++)for(let u=(r%2)*14+10;u<W;u+=28){const yy=sh+16+r*24;if(yy<jy(u)-16){x.beginPath();x.ellipse(u,yy,13,8,0,0,7);x.stroke()}}
+// stratum corneum with lipid "mortar"
+x.fillStyle=sc;x.fillRect(0,0,W,sh);x.strokeStyle="rgba(140,140,235,"+(.15+.7*P.bar)+")";x.lineWidth=2;
+for(let r=0;r<2;r++)for(let u=(r%2)*14;u<W;u+=28){x.strokeRect(u,r*sh/2,28,sh/2)}
+x.strokeStyle="rgba(255,255,255,.75)";x.lineWidth=3;x.beginPath();x.moveTo(0,sh);x.lineTo(W,sh);x.stroke();
+// skin-type signs: dryness cracks, oil/sebum, redness
+const dd=Math.max(0,(.5-P.hyd)/.5),R2=rng(seed*7+3);
+if(dd>0){x.fillStyle="rgba(235,225,215,"+(dd*.35)+")";x.fillRect(0,0,W,sh*1.2);
+for(let n=Math.round(dd*14)+3;n>0;n--){let u=R2()*W,y=0;x.beginPath();x.moveTo(u,y);for(let q=0;q<5;q++){u+=(R2()-.5)*16;y+=sh*.4+R2()*H*.025;x.lineTo(u,y)}x.strokeStyle="rgba(90,40,40,"+(.55+.3*dd)+")";x.lineWidth=2.5;x.stroke()}
+for(let n=Math.round(dd*18)+3;n>0;n--){const u=R2()*W,y=R2()*sh*.9,w=8+R2()*10;x.beginPath();x.moveTo(u,y);x.lineTo(u+w,y-3-R2()*4);x.lineTo(u+w*1.3,y+2);x.lineTo(u+w*.3,y+5);x.closePath();x.fillStyle="rgba(255,255,255,.88)";x.fill();x.strokeStyle="rgba(150,120,110,.6)";x.lineWidth=1;x.stroke()}}
+const oo=Math.max(0,(.3-P.clr)/.3);for(let n=Math.round(oo*10);n>0;n--){const u=R()*W,y=sh+10+R()*H*.18;x.beginPath();x.ellipse(u,y,6+R()*5,5+R()*4,0,0,7);x.fillStyle="rgba(255,226,120,.8)";x.fill();x.beginPath();x.arc(u-2,y-2,1.6,0,7);x.fillStyle="rgba(255,255,255,.9)";x.fill()}
+if(oo>.2){x.fillStyle="rgba(255,255,255,"+oo*.3+")";x.fillRect(0,0,W,sh*.45)}
+const rr=Math.max(0,(.3-P.calm)/.3);for(let n=Math.round(rr*16);n>0;n--){const u=R()*W,y=sh+8+(R()*.9)*(jy(u)-sh);x.beginPath();x.arc(u,y,2.5+R()*2,0,7);x.fillStyle="rgba(200,35,35,.75)";x.fill()}
+// fat layer
+x.save();x.beginPath();x.moveTo(0,H);x.lineTo(W,H);for(let u=W;u>=0;u-=4)x.lineTo(u,fy(u));x.closePath();x.fillStyle="#f3d46b";x.fill();x.clip();
+for(let r=0;r<4;r++)for(let u=(r%2)*22-10;u<W+30;u+=44){const cx=u+(R()-.5)*8,cy=H*.8+r*30+(R()-.5)*6;x.beginPath();x.ellipse(cx,cy,22,16,R()-.5,0,7);x.fillStyle="#f8e28d";x.fill();x.strokeStyle="#e0b94a";x.lineWidth=2;x.stroke()}
+x.restore();
+// dermis fibres
+x.save();x.beginPath();x.moveTo(0,0);for(let u=0;u<=W;u+=4)x.lineTo(u,jy(u));for(let u=W;u>=0;u-=4)x.lineTo(u,fy(u));x.closePath();x.clip();
+x.lineCap="round";x.lineWidth=15;x.strokeStyle="rgba(255,255,255,"+(.62+.33*P.rad)+")";
+for(let k=-1;k<9;k++){const u=k*W/8+(R()-.5)*14;x.beginPath();x.moveTo(u,H*.38);x.lineTo(u+120,H*.8);x.stroke();x.beginPath();x.moveTo(u+120,H*.38);x.lineTo(u,H*.8);x.stroke()}
+for(let k=0;k<6;k++){const u=(k+.5)*W/6+(R()-.5)*20,d=k%2?1:-1;x.beginPath();x.moveTo(u,H*.4);x.bezierCurveTo(u+34*d,H*.5,u-34*d,H*.62,u+10*d,H*.78);x.lineWidth=13;x.strokeStyle="#c97d12";x.stroke();x.lineWidth=8;x.strokeStyle=mixc("#e99a1c","#ffb23a",P.ren);x.stroke()}
+for(let k=0;k<7;k++)star(x,R()*W,H*.45+R()*H*.28,9+R()*5,"#6cb8ef","#2f7fd0");
+x.restore();
+// nerve endings
+x.strokeStyle="rgba(235,205,100,.95)";x.lineWidth=2;
+[.28,.7].forEach(f=>{const u=W*f;x.beginPath();x.moveTo(u,H*.7);x.bezierCurveTo(u+12,H*.55,u-10,H*.42,u+4,H*.3);x.stroke();x.beginPath();x.moveTo(u+4,H*.3);x.lineTo(u-16,H*.22);x.moveTo(u+4,H*.3);x.lineTo(u+20,H*.2);x.moveTo(u+2,H*.36);x.lineTo(u-18,H*.32);x.stroke()});
+// basal cells along the junction
+for(let u=8;u<W;u+=17){const y=jy(u);x.beginPath();x.ellipse(u,y,8,6,0,0,7);x.fillStyle="rgba(255,255,255,.92)";x.fill();x.strokeStyle="#8a6a6a";x.lineWidth=1;x.stroke();x.beginPath();x.arc(u,y,2,0,7);x.fillStyle="#b0403a";x.fill()}
+// pore with sebum plug
+const px=W*.72,pl=1-P.clr;x.fillStyle="rgba(70,60,60,.5)";x.fillRect(px-12,sh,24,H*.2);
+if(pl>.05){x.beginPath();x.ellipse(px,H*.24,4+10*pl,4+14*pl,0,0,7);x.fillStyle="#4a4540";x.fill()}
+// water droplets (hydration)
+for(let n=Math.round(P.hyd*16);n>0;n--){const u=R()*W,y=sh+14+R()*(fy(u)-sh-30);x.beginPath();x.arc(u,y,5,0,7);x.fillStyle="rgba(90,175,245,.88)";x.fill();x.strokeStyle="#fff";x.lineWidth=1;x.stroke();x.beginPath();x.arc(u-1.5,y-1.5,1.4,0,7);x.fillStyle="#fff";x.fill()}
+// radiance sparkles
+for(let n=Math.round(P.rad*9);n>0;n--)star(x,R()*W,sh+10+R()*(H*.3),6+R()*3,"#ffe27a","#e0b94a")}
+function Skin3D({L,tone}){const ref=useRef(),lv=useRef(L),[ok,setOk]=useState(true);lv.current=L;const tn=useRef(tone);tn.current=tone;
+useEffect(()=>{const el=ref.current,T=window.THREE;if(!T){setOk(false);return}
+let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){setOk(false);return}
+r.setPixelRatio(Math.min(window.devicePixelRatio||1,2));r.setSize(el.clientWidth,el.clientHeight);el.appendChild(r.domElement);r.domElement.style.touchAction="pan-y";
+const sc=new T.Scene(),cam=new T.PerspectiveCamera(30,el.clientWidth/el.clientHeight,.1,100);cam.position.set(0,0,21);cam.lookAt(0,0,0);
+const root=new T.Group();sc.add(root);
+const cvs=[0,1,2].map(()=>{const c=document.createElement("canvas");c.width=c.height=512;return c});
+const tx=cvs.map(c=>{const t=new T.CanvasTexture(c);t.minFilter=T.LinearFilter;t.generateMipmaps=false;t.anisotropy=4;return t});
+const topM=new T.MeshBasicMaterial({map:tx[2],color:0xffffff}),mats=[new T.MeshBasicMaterial({map:tx[1],color:0xd6d6d6}),new T.MeshBasicMaterial({map:tx[1],color:0xc4c4c4}),topM,new T.MeshBasicMaterial({color:0xd9b84f}),new T.MeshBasicMaterial({map:tx[0],color:0xffffff}),new T.MeshBasicMaterial({map:tx[0],color:0xe2e2e2})];
+const geo=new T.BoxGeometry(5,5,5),cube=new T.Mesh(geo,mats);root.add(cube);
+root.add(new T.LineSegments(new T.EdgesGeometry(geo),new T.LineBasicMaterial({color:0x000000,transparent:true,opacity:.22})));
+const cur={};for(const k in L)cur[k]=L[k]/100;let last="";
+let rx=.62,ry=-.7,dg=false,lx=0,ly=0,id;
+const dn=e=>{dg=true;lx=e.clientX;ly=e.clientY},mv=e=>{if(!dg)return;ry+=(e.clientX-lx)*.01;rx=Math.max(-.2,Math.min(1.2,rx+(e.clientY-ly)*.01));lx=e.clientX;ly=e.clientY},up=()=>{dg=false};
+const c=r.domElement;c.addEventListener("pointerdown",dn);window.addEventListener("pointermove",mv);window.addEventListener("pointerup",up);
+const tick=()=>{id=requestAnimationFrame(tick);const t=lv.current;for(const k in cur)cur[k]+=(t[k]/100-cur[k])*.06;
+const key=Object.values(cur).map(v=>Math.round(v*20)).join(",")+tn.current;
+if(key!==last){last=key;drawFace(cvs[0],7,cur,tn.current);drawFace(cvs[1],13,cur,tn.current);drawTop(cvs[2],21,cur,tn.current);tx.forEach(q=>q.needsUpdate=true)}
+if(!dg)ry+=.004;root.rotation.set(rx,ry,0);r.render(sc,cam)};tick();
+const rs=()=>{r.setSize(el.clientWidth,el.clientHeight);cam.aspect=el.clientWidth/el.clientHeight;cam.updateProjectionMatrix()};const ro=new ResizeObserver(rs);ro.observe(el);
+return()=>{cancelAnimationFrame(id);ro.disconnect();window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",up);c.removeEventListener("pointerdown",dn);tx.forEach(q=>q.dispose());r.dispose();if(c.parentNode===el)el.removeChild(c)}},[]);
+return h("div",{className:"three",ref:ref},!ok&&h("div",{className:"note",style:{padding:20}},"The 3D view needs WebGL, which isn’t available here."),h("div",{className:"hint"},"Drag to rotate · epidermis, dermis (collagen, elastin, fibroblasts) and fat layer"))}
+const FEAT={hyd:["Deep hydration","Humectants draw water into the outer layers so skin looks plumper and feels softer."],bar:["Barrier support","Lipids and supporting ingredients help skin hold water in and keep irritants out."],clr:["Clearer-looking pores","Oil-soluble acids and niacinamide help loosen buildup and refine the look of pores."],rad:["Radiance & even tone","Antioxidants and brightening actives help with dullness and the look of dark spots."],calm:["Soothing comfort","Soothing actives help skin feel calmer and more comfortable."],ren:["Skin renewal","Gentle exfoliation and vitamin A support cell turnover for smoother texture."]};
 // Typical ingredient science used in La Roche-Posay-style care for each skin type (educational assumptions, not a diagnosis).
 const TYPES={dry:["Dry","Feels tight, can look flaky",["ha","gly","cer","pan"]],oily:["Oily","Shiny, prone to clogged pores",["sal","lha","nia","gly"]],combo:["Combination","Oily T-zone, drier cheeks",["nia","ha","lha","gly"]],sens:["Sensitive","Reacts easily, can look red",["tsw","pan","mad","cer"]],norm:["Normal","Balanced, few concerns",["ha","nia","vc","tsw"]]};
 const CON={dull:["Dullness & uneven tone",["vc","mel","nia"]],spots:["Dark spots",["mel","nia"]],lines:["Fine lines",["ret","vc"]],pores:["Blemishes & pores",["sal","lha"]],red:["Redness",["mad","pan"]],flaky:["Flakiness",["cer","gly"]]};
 const TONES=["#f6d9c3","#efc3a0","#e0a97f","#c88b5e","#a8693e","#8a512f","#6a3b22","#4a2818"];
-const TONE_N=["Fair","Light","Light-medium","Medium","Tan","Deep tan","Deep","Rich deep"];
-// Collagen: the key structural feature of the skin. Ingredients listed here are the ones in this lab with collagen-related roles.
-const COL_ING=["vc","ret"];
-const Fibers=()=>h("svg",{viewBox:"0 0 240 140",style:{width:"100%",maxWidth:300,display:"block"},"aria-hidden":"true"},
-h("rect",{width:240,height:140,rx:16,fill:"var(--soft)"}),
-[0,1,2,3,4,5,6,7,8].map(k=>h("line",{key:"a"+k,x1:-20+k*32,y1:150,x2:60+k*32,y2:-10,stroke:"var(--blue)",strokeWidth:9,strokeLinecap:"round",opacity:.55})),
-[0,1,2,3,4,5,6,7,8].map(k=>h("line",{key:"b"+k,x1:60+k*32-20,y1:150,x2:-20+k*32-20,y2:-10,stroke:"var(--blue)",strokeWidth:9,strokeLinecap:"round",opacity:.3})));
+const BASE={dry:{hyd:10,bar:20,clr:60,rad:40,calm:50,ren:30},oily:{hyd:50,bar:50,clr:15,rad:40,calm:50,ren:30},combo:{hyd:35,bar:40,clr:35,rad:40,calm:50,ren:30},sens:{hyd:40,bar:15,clr:60,rad:45,calm:10,ren:30},norm:{hyd:55,bar:60,clr:60,rad:50,calm:60,ren:40}};
 function rec(sts,cs){let ids=[];for(let i=0;i<4;i++)sts.forEach(t=>{const x=TYPES[t][2][i];if(x&&!ids.includes(x))ids.push(x)});
 cs.forEach(c=>CON[c][1].forEach(i=>{if(!ids.includes(i))ids.push(i)}));
 if(sts.includes("sens"))ids=ids.filter(i=>i!=="ret"&&i!=="sal");
@@ -209,37 +285,42 @@ return{p,hit,flag,pct:Math.round(Math.min(.99,s)*100),miss:bk.filter(i=>!p.i.inc
 const BASE_T={dry:["tsw","nia"],oily:["nia","mel"],combo:["tsw","nia"],sens:["mel","nia"],norm:["tsw","mel"]};
 const BASE_C={dull:["mel","nia"],spots:["mel","nia"],lines:["tsw","nia"],pores:["nia"],red:["tsw","nia"],flaky:["tsw","nia"]};
 function baseFor(sts,cs){const u=new Set();sts.forEach(t=>BASE_T[t].forEach(i=>u.add(i)));cs.forEach(c=>BASE_C[c].forEach(i=>u.add(i)));return["tsw","mel","nia"].filter(i=>u.has(i))}
+const av=o=>Math.round(MET.reduce((a,[k])=>a+o[k],0)/MET.length);
 const Sec=({n,t,d,children})=>h("section",{className:"sec"},h("div",{className:"sh"},h("h2",null,t),d&&h("p",null,d)),children);
+function Pip({L,base,tone,setTone,st,sk,wk,big,setBig,min,setMin}){const[pos,setPos]=useState(null),[sz,setSz]=useState(1),ref=useRef(),W=[460,580,780][sz],Hh=[220,300,430][sz],dec=()=>{if(min)return;if(sz>0)setSz(sz-1);else setMin(true)},inc=()=>{if(min){setMin(false);return}if(sz<2)setSz(sz+1)};
+const start=e=>{if(e.target.closest("button"))return;const r=ref.current.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;
+const mv=ev=>setPos({x:Math.max(0,Math.min(window.innerWidth-r.width,ev.clientX-ox)),y:Math.max(0,Math.min(window.innerHeight-48,ev.clientY-oy))});
+const up=()=>{window.removeEventListener("pointermove",mv);window.removeEventListener("pointerup",up)};window.addEventListener("pointermove",mv);window.addEventListener("pointerup",up)};
+return h("div",{ref,className:"pip",style:Object.assign({width:"min("+W+"px,calc(100vw - 24px))","--ph":Hh+"px"},pos?{left:pos.x,top:pos.y,right:"auto",bottom:"auto"}:{})},
+h("div",{className:"ph",onPointerDown:start},h("span",null,"⠿ Your skin · "+st),h("span",{className:"dh"},wk||"Drag to move"),h("span",null,h("button",{onClick:dec,"aria-label":"Smaller",disabled:min},"−"),h("button",{onClick:inc,"aria-label":"Larger",disabled:!min&&sz===2},"+"))),
+!min&&h(Skin3D,{L,tone}),
+!min&&h("div",{style:{padding:"8px 14px",fontSize:"13px",lineHeight:1.5}},sk.map(k=>h("div",{key:k,style:{marginBottom:4}},h("b",null,TYPES[k][0]+": "),TYPES[k][1]))),
+!min&&h("div",{className:"pt"},h("span",{className:"pl"},"Skin tone"),TONES.map(c=>h("button",{key:c,className:"sw s"+(tone===c?" on":""),style:{background:c},onClick:()=>setTone(c),"aria-label":"Skin tone"}))),
+null)}
 function App(){const[sts,setSts]=useState([]),[cs,setCs]=useState([]),[tone,setTone]=useState(TONES[2]),[busy,setBusy]=useState(false),[sel,setSel]=useState(null),[bk,setBk]=useState([]),[drops,setDrops]=useState([]),[drag,setDrag]=useState(null),[over,setOver]=useState(false),[big,setBig]=useState(false),[min,setMin]=useState(false),[prog,setProg]=useState(0),[mode,setMode]=useState(null),[wk,setWk]=useState(null),[show,setShow]=useState(false),[go,setGo]=useState(0);
 const BI=baseFor(sts,cs),pb=useRef([]);useEffect(()=>{const old=pb.current;pb.current=BI;setBk(b=>[...BI,...b.filter(x=>!old.includes(x)&&!BI.includes(x))])},[BI.join()]);
 const br=useRef(),tm=useRef([]),iv=useRef(),ar=useRef(false),res=sts.length?rec(sts,cs):null,shelf=res?[...res.filter(p=>!BI.includes(p.id)).map(p=>({...p,rc:1})),...Object.keys(ING).filter(k=>!res.some(p=>p.id===k)&&!BI.includes(k)).map(id=>({id,rc:0,why:"Not a core pick for your skin type: "+ING[id].s+"."}))]:[],sl=res&&(ING[sel]&&!BI.includes(sel)?sel:shelf[0].id);
 const[calc,setCalc]=useState(false),[fin,setFin]=useState(false),finT=useRef(),ownSc=useRef(false),pend=useRef(false),bkKey=bk.join();useEffect(()=>{if(!bk.length)return;setCalc(true);const t=setTimeout(()=>setCalc(false),1100);return()=>clearTimeout(t)},[bkKey]);
-const showResults=()=>{clearTimeout(finT.current);setShow(true);setFin(true);setTimeout(()=>{const e=document.getElementById("results");e&&e.scrollIntoView({behavior:"smooth",block:"start"})},200);finT.current=setTimeout(()=>{setFin(false);setTimeout(()=>{const e=document.getElementById("resultsEnd");e&&e.scrollIntoView({behavior:"smooth",block:"end"})},250)},2400)};
-useEffect(()=>{if(!go)return;const t=setTimeout(()=>{const e=document.getElementById("results");e&&e.scrollIntoView({behavior:"smooth",block:"start"})},50);return()=>clearTimeout(t)},[go]);
+const showResults=()=>{clearTimeout(finT.current);setShow(true);setFin(true);setTimeout(()=>{void 0},200);finT.current=setTimeout(()=>{setFin(false);setTimeout(()=>{void 0},250)},2400)};
+useEffect(()=>{if(!go)return;const t=setTimeout(()=>{void 0},50);return()=>clearTimeout(t)},[go]);
 useEffect(()=>{if(!pend.current)return;if(!bk.some(x=>!BI.includes(x))){pend.current=false;return}const t=setTimeout(()=>{pend.current=false;showResults()},2200);return()=>clearTimeout(t)},[bkKey]);
 useEffect(()=>{if(ar.current)return;clearInterval(iv.current);if(!bk.some(x=>!BI.includes(x))){setProg(0);setWk(null);return}const t=setTimeout(()=>{let v=0;setProg(0);setWk(0);iv.current=setInterval(()=>{v=Math.min(1,v+.025);setProg(v);setWk(Math.round(v*8));if(v>=1)clearInterval(iv.current)},120)},700);return()=>clearTimeout(t)},[bkKey]);
+const B0=Object.fromEntries(MET.map(([k])=>[k,sts.length?sts.reduce((a,t)=>a+BASE[t][k],0)/sts.length:0]));
+const L=Object.fromEntries(MET.map(([k])=>[k,Math.min(100,bk.reduce((s,i)=>s+(ING[i].e[k]||0),0)*30)]));
+const S=sts.length?Object.fromEntries(MET.map(([k])=>[k,Math.min(100,sts.reduce((a,t)=>a+BASE[t][k],0)/sts.length+L[k]*.7*prog)])):L;
 const add=id=>{if(!ar.current)pend.current=true;setBk(b=>b.includes(id)?b:[...b,id]);const k=Math.random();setDrops(d=>[...d,{k,id}]);setTimeout(()=>setDrops(d=>d.filter(x=>x.k!==k)),1500)};
-const pick=k=>{pend.current=false;setShow(false);const first=!sts.length;setSts(a=>a.includes(k)?a.filter(x=>x!==k):[...a,k]);setSel(null);tm.current.forEach(clearTimeout);clearInterval(iv.current);clearTimeout(finT.current);setFin(false);ownSc.current=false;ar.current=false;setProg(0);setWk(null);setBusy(true);setTimeout(()=>setBusy(false),800);if(first)setTimeout(()=>document.getElementById("shelf").scrollIntoView({behavior:"smooth"}),300)};
-const auto=()=>{pend.current=false;setMode("auto");tm.current.forEach(clearTimeout);clearInterval(iv.current);clearTimeout(finT.current);setFin(false);br.current&&br.current.scrollIntoView({behavior:"smooth",block:"center"});ar.current=true;setBk(BI);setProg(0);setWk(0);const ids=res.filter(p=>!BI.includes(p.id)).slice(0,4);ids.forEach((p,i)=>tm.current.push(setTimeout(()=>{add(p.id);setSel(p.id)},500+i*1400)));tm.current.push(setTimeout(showResults,500+ids.length*1400+300));tm.current.push(setTimeout(()=>{let v=0;iv.current=setInterval(()=>{v=Math.min(1,v+.025);setProg(v);setWk(Math.round(v*8));if(v>=1){clearInterval(iv.current);ar.current=false}},120)},500+ids.length*1400))};
+const pick=k=>{pend.current=false;setShow(false);const first=!sts.length;setSts(a=>a.includes(k)?a.filter(x=>x!==k):[...a,k]);setSel(null);tm.current.forEach(clearTimeout);clearInterval(iv.current);clearTimeout(finT.current);setFin(false);ownSc.current=false;ar.current=false;setProg(0);setWk(null);setBusy(true);setTimeout(()=>setBusy(false),800)};
+const auto=()=>{pend.current=false;setMode("auto");tm.current.forEach(clearTimeout);clearInterval(iv.current);clearTimeout(finT.current);setFin(false);ar.current=true;setBk(BI);setProg(0);setWk(0);const ids=res.filter(p=>!BI.includes(p.id)).slice(0,4);ids.forEach((p,i)=>tm.current.push(setTimeout(()=>{add(p.id);setSel(p.id)},500+i*1400)));tm.current.push(setTimeout(showResults,500+ids.length*1400+300));tm.current.push(setTimeout(()=>{let v=0;iv.current=setInterval(()=>{v=Math.min(1,v+.025);setProg(v);setWk(Math.round(v*8));if(v>=1){clearInterval(iv.current);ar.current=false}},120)},500+ids.length*1400))};
 const emptyB=()=>{pend.current=false;tm.current.forEach(clearTimeout);clearInterval(iv.current);clearTimeout(finT.current);setFin(false);ownSc.current=false;ar.current=false;setProg(0);setWk(null);setBk(BI)};
 const inB=ev=>{const r=br.current.getBoundingClientRect();return ev.clientX>r.left&&ev.clientX<r.right&&ev.clientY>r.top&&ev.clientY<r.bottom};
 function down(e,id){const sx=e.clientX,sy=e.clientY;let mv=false;setSel(id);
 const m=ev=>{if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>6){mv=true;setDrag({id,x:ev.clientX,y:ev.clientY});setOver(inB(ev))}};
 const u=ev=>{window.removeEventListener("pointermove",m);window.removeEventListener("pointerup",u);window.removeEventListener("pointercancel",u);setDrag(null);setOver(false);if(mv&&inB(ev))add(id)};
 window.addEventListener("pointermove",m);window.addEventListener("pointerup",u);window.addEventListener("pointercancel",u)}
-const rank=bk.length?PROD.map(p=>score(p,bk,sts)).sort((a,b)=>b.pct-a.pct):[],best=rank[0]&&rank[0].hit.length?rank[0]:null,alts=rank.slice(1).filter(r=>r.hit.length).slice(0,2),warn=bk.filter(i=>ING[i].w);
+const rank=bk.length?PROD.map(p=>score(p,bk,sts)).sort((a,b)=>b.pct-a.pct):[],best=rank[0]&&rank[0].hit.length?rank[0]:null,alts=rank.slice(1).filter(r=>r.hit.length).slice(0,2),warn=bk.filter(i=>ING[i].w),cmpK=MET.filter(([k])=>L[k]>0).sort((a,b)=>L[b[0]]-L[a[0]]).slice(0,3),top=MET.filter(([k])=>L[k]>0).sort((a,b)=>L[b[0]]-L[a[0]]).slice(0,3);
 return h("div",{className:"wrap"},
 h("header",{className:"top"},h("h1",null,"Skin ",h("span",null,"Lab"))),
-h(Sec,{t:"Key feature: Collagen",d:"The protein that gives skin its structure."},
-h("div",{className:"card"},h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:40,alignItems:"center"}},
-h(Fibers),
-h("div",null,h("p",{style:{margin:"0 0 14px"}},"Collagen is the main structural protein in the dermis, the layer beneath the surface. It forms a supportive network that helps skin stay firm and resilient."),
-h("p",{className:"note",style:{margin:"0 0 14px"}},"Natural collagen levels decline with age, and UV exposure speeds up the breakdown. Daily broad-spectrum sunscreen is one of the most effective ways to protect it."),
-h("div",null,h("span",{className:"lbl",style:{margin:"0 12px 0 0"}},"Collagen-supporting ingredients"),COL_ING.map(i=>h("span",{key:i,className:"ic hit",style:{background:ING[i].c,borderColor:ING[i].c,color:"#0f2a43"}},ING[i].n))))))),
-h(Sec,{t:"Skin tone",d:"Choose the tone that is closest to yours."},
-h("div",{className:"card"},h("div",{className:"sws"},TONES.map((c,i)=>h("button",{key:c,className:"sw"+(tone===c?" on":""),style:{background:c},onClick:()=>setTone(c),"aria-label":TONE_N[i]}))),
-h("div",{className:"note",style:{marginTop:16}},"Selected: ",h("b",null,TONE_N[TONES.indexOf(tone)])))),
-h(Sec,{t:"Tell Us About Your Skin",d:"Pick one or more skin types. Your lab appears instantly."},
+h(Sec,{n:"01",t:"Tell Us About Your Skin",d:"Pick one or more skin types. Your lab and a live skin model appear instantly; you can change skin tone inside the model."},
 h("div",{className:"lbl"},"Skin type (choose one or more)"),h("div",{className:"feels"},Object.entries(TYPES).map(([k,[n,d]])=>h("button",{key:k,className:"feel"+(sts.includes(k)?" on":""),onClick:()=>pick(k)},h("b",null,n),h("small",null,d)))),
 
 h("div",{className:"lbl"},"Any concerns? (optional)"),h("div",{className:"sws"},Object.entries(CON).map(([k,[n]])=>h("button",{key:k,className:"cn"+(cs.includes(k)?" on":""),onClick:()=>setCs(c=>c.includes(k)?c.filter(x=>x!==k):[...c,k])},n))),
@@ -248,7 +329,7 @@ h("div",{id:"shelf"}),
 res&&h(Sec,{n:"02",t:"The Lab",d:"Build your own blend. Ingredients for "+sts.map(k=>TYPES[k][0].toLowerCase()).join(" + ")+" skin come first, but you choose what goes in the beaker."},
 h("div",{className:"bench"},
 h("div",{className:"card p2"},h("div",{ref:br},h(Beaker,{items:bk,drops,over})),
-h("div",{className:"row"},h("button",{className:mode==="own"?"g":"",onClick:auto},"▶ Auto-mix recommended"),h("button",{className:mode==="own"?"":"g",onClick:()=>{emptyB();setMode("own");const e=document.getElementById("shelfgrid");e&&e.scrollIntoView({behavior:"smooth",block:"nearest"})}},"Mix my own ingredients"),h("button",{className:"g",disabled:bk.length<=BI.length&&prog===0,onClick:()=>{emptyB();setMode("own")}},"Empty beaker")),
+h("div",{className:"row"},h("button",{className:mode==="own"?"g":"",onClick:auto},"▶ Auto-mix recommended"),h("button",{className:mode==="own"?"":"g",onClick:()=>{emptyB();setMode("own")}},"Mix my own ingredients"),h("button",{className:"g",disabled:bk.length<=BI.length&&prog===0,onClick:()=>{emptyB();setMode("own")}},"Empty beaker")),
 mode==="own"&&h("div",{className:"note",style:{marginTop:14}},"Choose ingredients from the shelf and drag them into the beaker. Once you have added them, give it a moment: the beaker finishes its animation, then the page moves down to your match."),
 h("div",{className:"note",style:{marginTop:14}},"Drag an ingredient into the beaker. Molecules are stylized and not to scale.")),
 h("div",{className:"card p2 shc"},h("div",{className:"shin"},h("div",{className:"lbl",style:{margin:"0 0 14px"}},"Ingredient shelf"),
@@ -257,7 +338,10 @@ h("div",{className:"det"},h("b",null,ING[sl].n),ING[sl].t?h("div",{style:{color:
 h("div",{className:"bench",style:{marginTop:80,gridTemplateColumns:"1fr"}},
 h("div",{className:"card p2 side"},h("h3",null,"In your beaker"),
 h("div",null,bk.map(i=>h("span",{key:i,className:"ic hit",style:{background:ING[i].c,borderColor:ING[i].c,color:"#0f2a43"}},ING[i].n)),h("div",{className:"note",style:{marginTop:10}},"Your base formula for "+sts.map(k=>TYPES[k][0].toLowerCase()).join(" + ")+" skin ("+BI.map(i=>ING[i].n).join(", ")+") is always in the beaker. Add more from the shelf.")),
+h("h3",null,"Your 3 key features"),
+top.length?h("div",null,top.map(([k],i)=>h("div",{className:"feat",key:k,style:{animationDelay:i*.15+"s"}},h("div",{className:"fn"},i+1),h("div",null,h("b",null,FEAT[k][0]),h("div",{className:"bar"},h("i",{style:{width:L[k]+"%"}})),h("p",null,FEAT[k][1]),h("small",null,"From: "+bk.filter(x=>ING[x].e[k]).map(x=>ING[x].n).join(", ")))))):h("div",{className:"note"},"Add ingredients to reveal what your blend does."),
 warn.length>0&&h("div",null,h("h3",null,"Good to know"),warn.map(i=>h("div",{key:i,className:"note"},"⚠ ",h("b",null,ING[i].n),": ",ING[i].w)))))),
+sts.length>0&&h(Pip,{L:S,base:B0,tone,setTone,st:sts.map(k=>TYPES[k][0]).join(" + "),sk:sts,wk:wk==null?"":"Week "+wk+" of 8",big,setBig,min,setMin}),
 res&&show&&bk.length>0&&h("div",{id:"results",style:{scrollMarginTop:16}}),
 res&&show&&bk.length>0&&h(Sec,{n:"03",t:"Best Product for Your Skin",d:"The closest La Roche-Posay formulas to the "+bk.length+" ingredient"+(bk.length>1?"s":"")+" in your beaker."},
 (calc||fin)?h("div",{className:"card"},h("div",{className:"note",style:{marginBottom:16}},h("span",{className:"spin"},"◐")," Calculating your match across "+PROD.length+" formulas…"),h("div",{style:{overflow:"hidden"}},h("div",{className:"scan"}))):
@@ -266,6 +350,7 @@ h("div",{className:"card rec"},h("div",{className:"tag"},"Recommended for your m
 h("div",{className:"rh"},h("div",null,h("h3",null,best.p.n),h("div",{className:"note"},best.p.f)),h("div",{className:"pct"},best.pct,h("small",null,"% match"))),
 h("div",{className:"bar"},h("i",{style:{width:best.pct+"%"}})),
 h("div",{style:{marginTop:18}},best.p.i.map(x=>h("span",{key:x,className:"ic"+(bk.includes(x)?" hit":"")},ING[x].n))),
+h("div",{className:"cmp"},cmpK.map(([k,l])=>h("div",{key:k},h("div",{className:"lab"},h("span",null,l),h("span",null,"your mix · formula")),h("div",{className:"bar"},h("i",{style:{width:L[k]+"%"}})),h("div",{className:"bar"},h("i",{style:{width:Math.min(100,best.pv[k]*30)+"%",background:"linear-gradient(90deg,#9fe0c4,#4cb88f)"}}))))),
 h("div",null,h("div",{className:"lbl",style:{margin:"80px 0 12px"}},"How it matches your ingredients"),bk.map(x=>{const inF=best.p.i.includes(x);return h("div",{key:x,className:"mrow"+(inF?"":" no")},h("span",{className:"ic"+(inF?" hit":"")},ING[x].n),h("span",null,inF?"In this formula: "+ING[x].s+".":"Not in this formula."))}),best.extra.length>0&&h("div",{className:"note",style:{marginTop:12}},"The formula also adds: "+best.extra.map(x=>ING[x].n).join(", ")+".")),
 best.flag&&h("div",{className:"note",style:{marginTop:10}},"⚠ This formula contains an exfoliating active, which may be too strong for sensitive skin. Start slowly or ask a dermatologist.")),
 alts.length>0&&h("div",null,h("div",{className:"lbl"},"Other close matches"),h("div",{className:"pg"},alts.map((a,i)=>h("div",{key:a.p.n,className:"card prod",style:{animationDelay:i*.2+"s"}},h("div",{style:{display:"flex",justifyContent:"space-between",gap:12}},h("b",{style:{fontSize:20}},a.p.n),h("b",{style:{color:"var(--blue)",fontSize:20}},a.pct+"%")),h("div",{className:"note"},a.p.f),h("div",null,a.p.i.map(x=>h("span",{key:x,className:"ic"+(bk.includes(x)?" hit":"")},ING[x].n))),h("div",{className:"note"},"Matches through ",a.hit.map(x=>ING[x].n).join(" + "),".")))))):
@@ -275,5 +360,3 @@ res&&show&&bk.length>0&&h("div",{id:"resultsEnd",style:{height:1}}),
 drag&&h("div",{className:"ghost gb",style:{left:drag.x,top:drag.y}},h(GB,{c:ING[drag.id].c,n:ING[drag.id].n})))}
 ReactDOM.createRoot(document.getElementById("root")).render(h(App));
 </script></body></html>
-
-</body></html>
